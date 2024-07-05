@@ -10,6 +10,7 @@ import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
+import { axi } from "@/app/context/AuthContext";
 
 const createNew = () => {
   const navigation = useNavigation();
@@ -21,8 +22,13 @@ const createNew = () => {
   }, [navigation]);
   
   const [formData, setFormData] = useState({
-    password: "",
+    newPassword: "",
+    verificationCode: "",
   });
+
+  const submit = async() => {
+    await axi.get(`/user/password/update-user-password`, {formData})
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -46,9 +52,9 @@ const createNew = () => {
             style={styles.inputField}
             placeholder="New password"
             onChangeText={(newText) =>
-              setFormData((prevState) => ({ ...prevState, password: newText }))
+              setFormData((prevState) => ({ ...prevState, neWpassword: newText }))
             }
-            defaultValue={formData.password}
+            defaultValue={formData.newPassword}
             secureTextEntry={true}
             //   keyboardType="password"
           />
@@ -61,7 +67,7 @@ const createNew = () => {
             onChangeText={(newText) =>
               setFormData((prevState) => ({ ...prevState, password: newText }))
             }
-            defaultValue={formData.password}
+            defaultValue={formData.newPassword}
             secureTextEntry={true}
           />
         </View>
@@ -71,6 +77,7 @@ const createNew = () => {
           style={styles.verifyButton}
           onPress={() => {
             /* Verify action */
+            submit()
           }}
         >
           <Text style={styles.verifyButtonText}>Create new password</Text>

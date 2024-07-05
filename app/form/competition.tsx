@@ -1,11 +1,12 @@
-import React, { useState, useLayoutEffect } from "react";
-import { StyleSheet, Text, View, TextInput, ScrollView } from "react-native";
+import React, { useState, useLayoutEffect, useEffect } from "react";
+import { StyleSheet, Text, View, TextInput, ScrollView, Alert } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import ActionButton from "../../components/actionButton";
 import RadioButtonRN from "radio-buttons-react-native";
 import { useNavigation } from "@react-navigation/native";
 import CheckBox from "react-native-check-box";
 import { axi } from "../context/AuthContext";
+import * as SecureStore from "expo-secure-store";
 
 const Competition = () => {
   const navigation = useNavigation();
@@ -15,6 +16,21 @@ const Competition = () => {
       headerShown: false,
     });
   }, [navigation]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const auth = await SecureStore.getItemAsync('authenticated');
+        if (auth != 'true') {
+          navigation.navigate("login");
+        }
+        console.log('Authentication status successfully.');
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkAuth()
+  }, []);
 
   const [formData, setFormData] = useState({
     haveCurrentInvestors: false,
@@ -34,8 +50,9 @@ const Competition = () => {
   const submitHandler = async () => {
     try {
       // Uncomment the line below once axi is configured
-      // const response = await axi.post("/pitch/update-pitch?step=competition_questions", formData);
+      const response = await axi.post("/pitch/update-pitch?step=competition_questions", formData);
       console.log("Form submitted successfully:", formData);
+      Alert.alert("Success", "Your Competition information has been saved.");
       navigation.navigate("/form/review/personalreview"); // Navigate to the next screen after submission
     } catch (error) {
       console.error("Error submitting form:", error);

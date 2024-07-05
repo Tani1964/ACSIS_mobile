@@ -6,34 +6,43 @@ import React, { useState, useLayoutEffect, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "../../context/AuthContext";
 import * as SecureStore from "expo-secure-store";
-import { useAuth } from "../../context/AuthContext";
+import { useLocalSearchParams } from 'expo-router';
+import { useRoute } from '@react-navigation/native';
+
 
 const PersonalReviewScreen = () => {
-  const { authState } = useAuth();
   const navigation = useNavigation();
-  const [personalInfo, setPersonalInfo] = useState({});
-  const [auth, setAuth] = useState({});
+  const [data, setData] = useState({})
+
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, [navigation]);
+  const route = useRoute();
+  const { itemId } = route.params;
 
   useEffect(() => {
-    const getdata = async () => {
-      // await setAuth(SecureStore.getItemAsync("authenticated"));
-      // const token = await SecureStore.getItemAsync("token");
-      // const headers = { Authorization: `Bearer ${token}` };
-      const headers = { "Authorization": `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE0ZTUzMzM0LTNiNDMtNGM3Yi05YTFlLTFhMWJiMDAwZTQwMCIsImVtYWlsIjoiaWZlZ2Jlc2FuNitzc3NAZ21haWwuY29tIiwic2Vzc2lvbklkIjoiZjUyN2QxODQtMWFmYi00MTZjLWJjNjAtOTUyMGQ3ZGZmYWY4IiwiaWF0IjoxNzE5ODQ5NDE2MjIzLCJleHAiOjE3MTk5MzU4MTYyMjMsImlzcyI6InVwaV9zZXJ2ZXIifQ.ZSUM8a47ur00ssnbiViwgtLTrCAJVctYTA7X1jEsz0w"}` };
-      // const response = await axi.get('/pitch/get-pitch',{headers})
-      const response = await axi.get("/pitch/get-pitch", { headers });
-      setPersonalInfo(response.data.pitch.personal_information);
-      console.log(response.data);
-      console.log(personalInfo);
-      
+    const checkAuth = async () => {
+      try {
+        const auth = await SecureStore.getItemAsync('authenticated');
+        if (auth != 'true') {
+          navigation.navigate("login");
+        }
+        console.log('Authentication status successfully.');
+      } catch (error) {
+        console.error(error);
+      }
     };
-    getdata();
+    const getData = async() => {
+      const headers = { Authorization: `Bearer ${SecureStore.getItem("token")}` };
+      const response = await axi.get(`/api/v1/pitch/get-pitch/${itemId}`, {headers})
+      setData(response.data)
+      console.log(response)
+    }
+    checkAuth()
+    getData()
   }, []);
 
   return (
@@ -50,7 +59,7 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{personalInfo.full_name}</Text>
+          <Text style={styles.infoValue}>{data.full_name}</Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -62,7 +71,7 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{personalInfo.email}</Text>
+          <Text style={styles.infoValue}>{data.email}</Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -74,7 +83,7 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{personalInfo.phone_number}</Text>
+          <Text style={styles.infoValue}>{data.phone_number}</Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -86,7 +95,7 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{personalInfo.date_of_birth}</Text>
+          <Text style={styles.infoValue}>{data.date_of_birth}</Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -98,7 +107,7 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{personalInfo.nationality}</Text>
+          <Text style={styles.infoValue}>{data.nationality}</Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -110,7 +119,7 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{personalInfo.ethnicity}</Text>
+          <Text style={styles.infoValue}>{data.ethnicity}</Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -122,7 +131,7 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{personalInfo.requires_disability_support? "Yes":"No"}</Text>
+          <Text style={styles.infoValue}>{data.requires_disability_support? "Yes":"No"}</Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -134,7 +143,7 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{personalInfo.disability_support_description}</Text>
+          <Text style={styles.infoValue}>{data.disability_support_description}</Text>
         </View>
       </ScrollView>
       <ActionButton text="Next" link="/form/review/proffesionalreview" />

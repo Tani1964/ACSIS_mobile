@@ -20,7 +20,8 @@ const Layout = () => {
       <Tabs.Screen name="index" options={{ title: 'Feed' }} />
       <Tabs.Screen name="events" options={{ title: 'Events' }} />
       <Tabs.Screen name="(pitch)/index" options={{ title: 'Pitch' }} />
-      <Tabs.Screen name="business" options={{ title: 'Business' }} />
+      <Tabs.Screen name="(pitch)/pitchList" options={{ title: 'Pitch' }} />
+      <Tabs.Screen name="business" options={{ title: 'Businesses' }} />
     </Tabs>
     </SafeAreaView>
   );

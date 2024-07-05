@@ -13,35 +13,43 @@ import { Link } from "expo-router";
 import { useNavigation } from '@react-navigation/native';
 import {axi} from "../../context/AuthContext";
 import * as SecureStore from 'expo-secure-store'
-import { useAuth } from "../../context/AuthContext";
+import { useLocalSearchParams } from 'expo-router';
+import { useRoute } from '@react-navigation/native';
 
 
 const ProfessionalReview = () => {
-  const { authState } = useAuth();
   const navigation = useNavigation();
-  const [professionalInfo, setProfessionalInfo] = useState({});
-  const [auth, setAuth] = useState({});
+  const [data, setData] = useState({})
+  
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, [navigation]);
+  const route = useRoute();
+  const { itemId } = route.params;
 
   useEffect(() => {
-    const getdata = async () => {
-      // await setAuth(SecureStore.getItemAsync("authenticated"));
-      // const token = await SecureStore.getItemAsync("token");
-      // const headers = { Authorization: `Bearer ${token}` };
-      const headers = { "Authorization": `Bearer ${"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE0ZTUzMzM0LTNiNDMtNGM3Yi05YTFlLTFhMWJiMDAwZTQwMCIsImVtYWlsIjoiaWZlZ2Jlc2FuNitzc3NAZ21haWwuY29tIiwic2Vzc2lvbklkIjoiZjUyN2QxODQtMWFmYi00MTZjLWJjNjAtOTUyMGQ3ZGZmYWY4IiwiaWF0IjoxNzE5ODQ5NDE2MjIzLCJleHAiOjE3MTk5MzU4MTYyMjMsImlzcyI6InVwaV9zZXJ2ZXIifQ.ZSUM8a47ur00ssnbiViwgtLTrCAJVctYTA7X1jEsz0w"}` };
-      // const response = await axi.get('/pitch/get-pitch',{headers})
-      const response = await axi.get("/pitch/get-pitch", { headers });
-      setProfessionalInfo(response.data.pitch.personal_information);
-      console.log(response.data);
-      console.log(professionalInfo);
-      
+    const checkAuth = async () => {
+      try {
+        const auth = await SecureStore.getItemAsync('authenticated');
+        if (auth != 'true') {
+          navigation.navigate("login");
+        }
+        console.log('Authentication status successfully.');
+      } catch (error) {
+        console.error(error);
+      }
     };
-    getdata();
+    const getData = async() => {
+      const headers = { Authorization: `Bearer ${SecureStore.getItem("token")}` };
+      const response = await axi.get(`/api/v1/pitch/get-pitch/${itemId}`, {headers})
+      setData(response.data)
+      console.log(response)
+    }
+    checkAuth()
+    getData()
   }, []);
 
   return (

@@ -10,6 +10,7 @@ const Pitch = () => {
       headerShown: false,
     });
   }, [navigation]);
+  
 
   return (
     <View style={styles.body}>

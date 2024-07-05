@@ -74,10 +74,10 @@ const Index = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // const auth = await SecureStore.getItemAsync('authenticated');
-        // if (auth != 'true') {
-        //   navigation.navigate("login");
-        // }
+        const auth = await SecureStore.getItemAsync('authenticated');
+        if (auth != 'true') {
+          navigation.navigate("login");
+        }
         console.log('Authentication status successfully.');
       } catch (error) {
         console.error(error);

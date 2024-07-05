@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView } from "react-native";
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
 import React, { useState,useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
@@ -33,6 +33,15 @@ const ConfirmationCode = () => {
       alert(error.response.data.message || 'An error occurred. Please try again.')
     }
   }
+  const resendVerificationCode = async() => {
+    try {
+      await axi.get(`/auth/resend-email-verification-code`, {email: email});
+      Alert.prompt('Code has been resent, check your email')
+    } catch (error) {
+      // console.log(error.response.data.message);
+      alert(error.response.data.message || 'An error occurred. Please try again.')
+    }
+  }
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
@@ -56,7 +65,7 @@ const ConfirmationCode = () => {
           ))}
         </View>
 
-        <Text style={styles.resendText}>I didn't get the code</Text>
+        <Text style={styles.resendText} onPress={resendVerificationCode}>I didn't get the code</Text>
 
         {/* Verify Button */}
         <TouchableOpacity

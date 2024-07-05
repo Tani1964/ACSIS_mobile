@@ -23,6 +23,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useAuth } from "../context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
+import * as SecureStore from "expo-secure-store";
 
 const Personal = () => {
   const [loading, setLoading] = useState(false);
@@ -30,10 +31,19 @@ const Personal = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    if (!authState?.authenticated) {
-      navigation.navigate("auth/mainAuth/signin");
-    }
-  }, [authState, navigation]);
+    const checkAuth = async () => {
+      try {
+        const auth = await SecureStore.getItemAsync('authenticated');
+        if (auth != 'true') {
+          navigation.navigate("login");
+        }
+        console.log('Authentication status successfully.');
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkAuth()
+  }, []);
 
   const formatDate = (rawDate) => {
     const date = new Date(rawDate);
@@ -82,8 +92,8 @@ const Personal = () => {
     try {
       const headers = { Authorization: `Bearer ${authState.token}` };
       console.log(formData);
-      // const response = await axi.post("/pitch/initiate-pitch", formData, { headers });
-      // Alert.alert("Success", "Your personal information has been saved.");
+      const response = await axi.post("/pitch/initiate-pitch", formData, { headers });
+      Alert.alert("Success", "Your personal information has been saved.");
       const result = axi.get("/pitch/get-pitch", { headers }).then((res) => {
         const data = res.data.pitch.personal_information;
         setFormData({
@@ -98,7 +108,7 @@ const Personal = () => {
         });
       });
 
-      navigation.navigate("form/proffessional");
+      navigation.navigate("form/proffesional");
     } catch (error) {
       Alert.alert(
         "Error",

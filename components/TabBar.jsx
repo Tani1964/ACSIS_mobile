@@ -1,23 +1,35 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AntDesign, Ionicons, FontAwesome5, MaterialIcons, Feather } from '@expo/vector-icons';
+import { useNavigation } from "@react-navigation/native";
+import * as SecureStore from 'expo-secure-store';
 
 const TabBar = ({ state, descriptors, navigation }) => {
+    const [authState, setAuthState] = useState(false);
+
+    useEffect(() => {
+        const fetchAuthState = async () => {
+            const authValue = await SecureStore.getItemAsync("authenticated");
+            console.log(authValue)
+            setAuthState(authValue);
+        };
+        fetchAuthState();
+    }, []);
 
     const icons = {
         index: (props) => <MaterialIcons name="feed" size={24} color={props.color} {...props} />,
         events: (props) => <FontAwesome5 name="calendar" size={24} color={props.color} {...props} />,
         "(pitch)/index": (props) => <Ionicons name="bulb" size={24} color={props.color} {...props} />,
+        "(pitch)/pitchList": (props) => <Ionicons name="bulb" size={24} color={props.color} {...props} />,
         business: (props) => <Ionicons name="business-sharp" size={24} color={props.color} {...props} />,
     };
 
     const primaryColor = "#196100";
     const greyColor = "grey";
-
+    console.log(authState)
     return (
         <View style={styles.tabbar}>
             {state.routes.map((route, index) => {
-                console.log(route);
                 const { options } = descriptors[route.key];
                 const label =
                     options.tabBarLabel !== undefined
@@ -25,9 +37,10 @@ const TabBar = ({ state, descriptors, navigation }) => {
                         : options.title !== undefined
                             ? options.title
                             : route.name;
-                            console.log(route)
+                // console.log(authState)
+                const pitchState = authState ? "(pitch)/pitchList" : "(pitch)/index";
 
-                if (!['index', 'events', "(pitch)/index", "business" ].includes(route.name)) return null;
+                if (!['index', 'events', "business", pitchState].includes(route.name)) return null;
 
                 const isFocused = state.index === index;
 
@@ -62,8 +75,8 @@ const TabBar = ({ state, descriptors, navigation }) => {
                         onLongPress={onLongPress}
                     >
                         {icons[route.name] ? icons[route.name]({ color: isFocused ? primaryColor : greyColor }) : null}
-                        <Text style={{ 
-                            color: isFocused ? primaryColor : greyColor, fontSize: 12 
+                        <Text style={{
+                            color: isFocused ? primaryColor : greyColor, fontSize: 12
                         }}>
                             {label}
                         </Text>

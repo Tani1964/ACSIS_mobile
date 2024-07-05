@@ -21,7 +21,7 @@ const Signup = () => {
   const submitHandler = async () => {
     setLoading(true);
     try {
-      const response = await axi.post("/auth/signup", {email, fullName, password});
+      const response = await axi.post("/auth/register", {email, fullName, password});
       if (response.error) {
         alert(response.msg);
       } else {
@@ -86,7 +86,7 @@ const Signup = () => {
             {loading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={{}}>Sign Up</Text>
+              <Text style={{color: "white"}}>Sign Up</Text>
             )}
           </TouchableOpacity>
           <TouchableOpacity

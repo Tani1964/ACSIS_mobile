@@ -1,10 +1,14 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import React, { useState,useLayoutEffect } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState,useLayoutEffect, useEffect } from "react";
 import { AntDesign } from "@expo/vector-icons";
 import ActionButton from "@/components/actionButton";
 import PropTypes from "prop-types";
 import { Link } from "expo-router";
 import { useNavigation } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
+import { useRoute } from '@react-navigation/native';
+import * as SecureStore from "expo-secure-store";
+import { axi } from "@/app/context/AuthContext";
 
 const CompetitionReviewItem = ({ label, value, onEdit }) => (
   <View style={styles.itemContainer}>
@@ -29,6 +33,7 @@ CompetitionReviewItem.propTypes = {
 
 const CompetitionReviewScreen = () => {
   const navigation = useNavigation();
+  const [data, setData] = useState({})
   const competitionReviewData = [
     {
       label: "Does your company have any current investors?",
@@ -53,6 +58,41 @@ const CompetitionReviewScreen = () => {
       headerShown: false,
     });
   }, [navigation]);
+  const route = useRoute();
+  const { itemId } = route.params;
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const auth = await SecureStore.getItemAsync('authenticated');
+        if (auth != 'true') {
+          navigation.navigate("login");
+        }
+        console.log('Authentication status successfully.');
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    const getData = async() => {
+      const headers = { Authorization: `Bearer ${SecureStore.getItem("token")}` };
+      const response = await axi.get(`/api/v1/pitch/get-pitch/${itemId}`, {headers})
+      setData(response.data)
+      console.log(response)
+    }
+    checkAuth()
+    getData()
+  }, []);
+
+  const submitHandler = async() => {
+    try {
+      const headers = { Authorization: `Bearer ${SecureStore.getItem("token")}` };
+      const response = await axi.get(`/api/v1/pitch/submit-pitch/${itemId}`, {headers})
+      Alert.prompt("Form submitted successfully.")
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
 
   return (
     <View style={styles.container}>
@@ -67,7 +107,8 @@ const CompetitionReviewScreen = () => {
           />
         ))}
       </ScrollView>
-      <ActionButton text="Submit Application" link="/form/review/submittion" />
+      <Pressable onPress={submitHandler}>
+      <ActionButton text="Submit Application" link="/form/review/submittion" /></Pressable>
     </View>
   );
 };

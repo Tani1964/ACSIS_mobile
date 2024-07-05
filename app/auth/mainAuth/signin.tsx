@@ -12,7 +12,6 @@ import {
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
-import { useAuth } from "@/app/context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
 import * as SecureStore from 'expo-secure-store';
@@ -23,7 +22,6 @@ const Signin = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
-  const { authState, setAuthState } = useAuth();
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
@@ -36,15 +34,11 @@ const Signin = () => {
     setLoading(true);
     try {
       const response = await axi.post("/auth/login", formData);
-      console.log(formData)
-      setAuthState({
-        authenticated: true,
-        token: response?.data?.token,
-      });
       await SecureStore.setItemAsync('token', response?.data?.token);
       await SecureStore.setItemAsync('authenticated', 'true');
       navigation.navigate("form/index");
     } catch (error) {
+      await SecureStore.setItemAsync('authenticated', 'false'); // Ensure this is set to false on failure
       Alert.alert("Login Failed", "Please check your email and password.");
       console.log(error);
     } finally {
@@ -56,14 +50,12 @@ const Signin = () => {
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <View style={styles.headerContainer}>
-          {/* <Image source={require("../../../assets/images/PNG File 1.png")} style={styles.headerImage} /> */}
           <Text style={styles.headerTitle}>Welcome Back!</Text>
           <Text style={styles.headerSubtitle}>
             Enter your email to sign into your account
           </Text>
         </View>
 
-        {/* Inputs */}
         <View style={styles.inputsContainer}>
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={24} color="lightgrey" />
@@ -99,7 +91,6 @@ const Signin = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.signinButton}
@@ -126,7 +117,6 @@ const Signin = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Links */}
         <View style={styles.footerContainer}>
           <Text style={styles.footerText}>
             Don't have an account?{" "}

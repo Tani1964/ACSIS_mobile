@@ -24,25 +24,19 @@ const Proffessional = () => {
     linkedinUrl: "",
   });
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-  }, [navigation]);
-
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // const auth = await SecureStore.getItemAsync('authenticated');
-        // if (auth !== 'true') {
-        //   navigation.navigate("login");
-        // }
-        console.log("Authentication status checked successfully.");
+        const auth = await SecureStore.getItemAsync('authenticated');
+        if (auth != 'true') {
+          navigation.navigate("login");
+        }
+        console.log('Authentication status successfully.');
       } catch (error) {
         console.error(error);
       }
     };
-    checkAuth();
+    checkAuth()
   }, []);
 
   const handleChange = (name, value) => {
@@ -55,12 +49,12 @@ const Proffessional = () => {
 
     // const headers = { "Authorization": `Bearer ${h}` };
     try {
-      // const response = await axi.patch("/pitch/update-pitch?step=professional_background", formData, {
-      //   headers,
-      // });
+      const response = await axi.patch("/pitch/update-pitch?step=professional_background", formData, {
+        headers,
+      });
       console.log(formData);
-      // Alert.alert("Success", "Your professional information has been saved.");
-      const result = await axi.get("/pitch/get-pitch", { headers });
+      Alert.alert("Success", "Your professional information has been saved.");
+      // const result = await axi.get("/pitch/get-pitch", { headers });
       navigation.navigate("form/competition");
     } catch (error) {
       Alert.alert(

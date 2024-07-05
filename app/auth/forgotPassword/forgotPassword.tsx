@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView } from "react-native";
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
+import { axi } from "@/app/context/AuthContext";
 
 const ForgotPassword = () => {
   const navigation = useNavigation();
@@ -19,13 +20,22 @@ const ForgotPassword = () => {
     password: "",
   });
 
+  const resendPassword = async() => {
+    await axi.get(`/user/password/resend-forgot-password-code?email=${formData.email}`)
+    Alert.prompt('The code has been sent again, please check your email')
+  }
+
+  const verifyPassword = async () => {
+    await axi.post(`/user/password/verify-forgot-password-code`)
+    Alert.prompt('The code has been verified')
+  }
   
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <Ionicons name="arrow-back" size={24} color="black" style={styles.backIcon} />
-        <Text style={styles.headerTitle}>Forgot password?</Text>
+        <Text style={styles.headerTitle} onPress={resendPassword}>Forgot password?</Text>
         <Text style={styles.headerSubtitle}>Enter the email sent registered to your account and we will email you a link to reset your password
         </Text>
 
@@ -47,6 +57,7 @@ const ForgotPassword = () => {
           style={styles.verifyButton}
           onPress={() => {
             /* Verify action */
+            verifyPassword()
           }}
         >
           <Text style={styles.verifyButtonText}>Continue</Text>
