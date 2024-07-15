@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -10,13 +10,15 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
 import { useAuth } from "../context/AuthContext";
-import * as SecureStore from "expo-secure-store";
 
 const Proffessional = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  
+  const { id } = route.params || {}; // Default to an empty object to avoid destructuring undefined
   const { authState } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -25,19 +27,26 @@ const Proffessional = () => {
   });
 
   useEffect(() => {
+    console.log("Route Params:", route.params);
+    if (!id) {
+      console.log("ID not found in route params");
+    }
+  }, [route.params]);
+
+  useEffect(() => {
     const checkAuth = async () => {
       try {
-        const auth = await SecureStore.getItemAsync('authenticated');
-        if (auth != 'true') {
-          navigation.navigate("login");
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
         }
-        console.log('Authentication status successfully.');
+        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
     };
-    checkAuth()
-  }, []);
+    checkAuth();
+  }, [authState.authenticated, navigation]);
 
   const handleChange = (name, value) => {
     setFormData((prevState) => ({ ...prevState, [name]: value }));
@@ -46,16 +55,19 @@ const Proffessional = () => {
   const submitHandler = async () => {
     setLoading(true);
     const headers = { Authorization: `Bearer ${authState.token}` };
-
-    // const headers = { "Authorization": `Bearer ${h}` };
     try {
-      const response = await axi.patch("/pitch/update-pitch?step=professional_background", formData, {
+      console.log(route);
+      
+      console.log(`/pitch/update-pitch/${id}/professional_background`, formData, {
+        headers,
+      });
+
+      const response = await axi.patch(`/pitch/update-pitch/${id}/professional_background`, formData, {
         headers,
       });
       console.log(formData);
       Alert.alert("Success", "Your professional information has been saved.");
-      // const result = await axi.get("/pitch/get-pitch", { headers });
-      navigation.navigate("form/competition");
+      navigation.navigate("form/competition", {id:id});
     } catch (error) {
       Alert.alert(
         "Error",
@@ -111,7 +123,7 @@ const Proffessional = () => {
               <AntDesign name="linkedin-square" size={24} color="lightgrey" />
               <TextInput
                 style={styles.inputField}
-                placeholder="LinkedIn URL"
+                placeholder="LinkedIn URL e.g 'https://gg.com'"
                 onChangeText={(newText) => handleChange("linkedinUrl", newText)}
                 value={formData.linkedinUrl}
               />
@@ -132,27 +144,6 @@ const Proffessional = () => {
           )}
         </TouchableOpacity>
       </View>
-    </View>
-  );
-};
-
-const Question = ({ title, onChangeText, highlightWords = [] }) => {
-  const highlightedTitle = highlightWords.reduce(
-    (acc, word) =>
-      acc.split(word).join(<Text style={styles.highlight}>{word}</Text>),
-    title
-  );
-
-  return (
-    <View style={styles.questionContainer}>
-      <Text style={styles.questionTitle}>{highlightedTitle}</Text>
-      <TextInput
-        style={styles.textArea}
-        multiline
-        numberOfLines={4}
-        textAlignVertical="top"
-        onChangeText={onChangeText}
-      />
     </View>
   );
 };

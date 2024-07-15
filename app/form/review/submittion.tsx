@@ -1,15 +1,33 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
-import React, { useState,useLayoutEffect } from "react";
+import React, { useState,useLayoutEffect, useEffect } from "react";
 import ActionButton from '@/components/actionButton'
 import { useNavigation } from '@react-navigation/native';
+import { axi, useAuth } from "../../context/AuthContext";
 
 const SubmittedScreen = () => {
   const navigation = useNavigation();
+  const { authState } = useAuth();
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, [navigation]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
+        }
+        console.log("Authentication status successfully.");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkAuth();
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.contentContainer}>

@@ -5,7 +5,7 @@ import { Link } from "expo-router";
 const ActionButton = ({text, link}) => {
   return ( 
       
-      <View style={{flexDirection: "row", alignSelf:"center", position:"fixed", bottom:-30}}>
+      <View style={{flexDirection: "row", alignSelf:"center", position:"fixed", bottom:-10}}>
         <Link href={link} style={styles.link}>
           {text}
         </Link>

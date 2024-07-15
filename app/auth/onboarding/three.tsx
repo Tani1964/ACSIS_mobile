@@ -9,7 +9,7 @@ const Three = () => {
   const navigation = useNavigation();
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
   return (

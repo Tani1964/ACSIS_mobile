@@ -2,12 +2,14 @@ import { Button, StyleSheet, Text, View, Image, TouchableOpacity } from "react-n
 import React, { useState,useLayoutEffect } from "react";
 import { Link } from "expo-router";
 import { useNavigation } from '@react-navigation/native';
+import { axi, useAuth } from "../../context/AuthContext";
 
 const Pitch = () => {
   const navigation = useNavigation();
+  const { authState } = useAuth();
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
   
@@ -30,11 +32,16 @@ const Pitch = () => {
         </View>
       </View>
       <View>
-        <Link href="/auth/onboarding/one" asChild>
-          <TouchableOpacity style={styles.link}>
-            <Text style={styles.linkText}>Pitch an idea</Text>
-          </TouchableOpacity>
-        </Link>
+        
+      {authState.authenticated?<Link href="/form/index" asChild>
+        <TouchableOpacity style={styles.link}>
+          <Text style={styles.linkText}>Pitch an idea</Text>
+        </TouchableOpacity>
+      </Link>:<Link href="/auth/onboarding/one" asChild>
+        <TouchableOpacity style={styles.link}>
+          <Text style={styles.linkText}>Pitch an idea</Text>
+        </TouchableOpacity>
+      </Link>}
       </View>
     </View>
   );

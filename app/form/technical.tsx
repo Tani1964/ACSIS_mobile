@@ -1,37 +1,28 @@
-import { StyleSheet, Text, View, TextInput, ScrollView } from "react-native";
-import React, { useState,useLayoutEffect } from "react";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState, useLayoutEffect, useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { AntDesign } from "@expo/vector-icons";
-import { SimpleLineIcons } from "@expo/vector-icons";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Button } from "react-native";
-import DatePicker from "react-native-date-picker";
-import ActionButton from "../../components/actionButton"
-import { useNavigation } from '@react-navigation/native';
+import RadioButtonRN from "radio-buttons-react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import CheckBox from "react-native-check-box";
+import { axi } from "../context/AuthContext";
 import { useAuth } from "../context/AuthContext";
+import * as SecureStore from "expo-secure-store";
 
 const technical = () => {
   const navigation = useNavigation();
-  const {authState} = useAuth();
-
-  if(!authState.authenticated){
-    navigation.navigate('login');
-  }
-
-  const [text, setText] = useState("");
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    dob: "",
-    nationality: "",
-    ethnicity: "",
-    disability: "",
-    disabilityInfo: "",
-  });
-
-  const [date, setDate] = useState(new Date());
-  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { authState } = useAuth();
+  const route = useRoute();
+  const { id } = route.params;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -39,76 +30,263 @@ const technical = () => {
     });
   }, [navigation]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => ({ ...prevState, [name]: value }));
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
+        }
+        console.log("Authentication status successfully.");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const [formData, setFormData] = useState({
+    haveCurrentInvestors: false,
+    haveCurrentInvestorsDescription: "",
+    haveDebts: false,
+    debtsInfo: "",
+    haveCurrentEmployees: false,
+    haveCurrentEmployeesDescription: "",
+    hasSignedTechnicalAgreement: false,
+  });
+
+  const [isAgreementChecked, setIsAgreementChecked] = useState(false);
+
+  const options = [
+    { label: "yes", state: true },
+    { label: "no", state: false },
+  ];
+
+  const submitHandler = async () => {
+    if (!isAgreementChecked) {
+      Alert.alert("Error", "You must agree to the terms and conditions to proceed.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const headers = { Authorization: `Bearer ${authState.token}` };
+      const response = await axi.patch(
+        `/pitch/update-pitch/${id}/technical_agreement`,
+        { ...formData, hasSignedTechnicalAgreement: isAgreementChecked },
+        { headers }
+      );
+      Alert.alert("Success", "Your competition information has been saved.");
+      navigation.navigate("form/review/personalreview", { id });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <ScrollView>
-    <View
-      style={{
-        padding: 20,
-        paddingBottom: 40,
-        backgroundColor: "white",
-        flexDirection: "column",
-        gap: 5,
-        height: "100vh",
-      }}
-    >
-      {/* page links */}
-      <View></View>
-      {/* questions */}
-      <View
-        style={{ backgroundColor: "white", flexDirection: "column", gap: 20 }}
+    <View style={styles.container}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+        }}
       >
-        
-        <View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.inputField}
-              placeholder="Email address"
-              onChangeText={(newText) => setFormData((prevState) => ({ ...prevState, email: newText }))}
-              defaultValue={formData.email}
+        <View style={styles.pageLinks}>
+          <Text style={styles.pageLinkText}>
+            Personal Information <AntDesign name="right" size={13} color="black" />
+          </Text>
+          <Text style={styles.pageLinkText}>
+            Professional Background <AntDesign name="right" size={13} color="black" />
+          </Text>
+          <Text style={styles.activePageLinkText}>
+            Competition Questions <AntDesign name="right" size={15} color="black" />
+          </Text>
+        </View>
+      </ScrollView>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.questionsContainer}>
+          <View style={styles.question}>
+            <Text style={styles.boldText}>
+              Does your company have any current investors?
+            </Text>
+            <RadioButtonRN
+              data={options}
+              box={false}
+              selectedBtn={(e) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  haveCurrentInvestors: e.state,
+                }))
+              }
+              icon={<AntDesign name="rocket1" size={25} color="#196100" />}
+            />
+            {formData.haveCurrentInvestors && (
+              <TextInput
+                style={styles.textArea}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                placeholder="Please specify..."
+                onChangeText={(newText) =>
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    haveCurrentInvestorsDescription: newText,
+                  }))
+                }
+              />
+            )}
+          </View>
+          <View style={styles.question}>
+            <Text style={styles.boldText}>
+              Do you have any existing debt or liabilities which we should be aware of?
+            </Text>
+            <RadioButtonRN
+              data={options}
+              box={false}
+              selectedBtn={(e) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  haveDebts: e.state,
+                }))
+              }
+              icon={<AntDesign name="rocket1" size={25} color="#196100" />}
+            />
+            {formData.haveDebts && (
+              <TextInput
+                style={styles.textArea}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                placeholder="Please specify..."
+                onChangeText={(newText) =>
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    debtsInfo: newText,
+                  }))
+                }
+              />
+            )}
+          </View>
+          <View style={styles.question}>
+            <Text style={styles.boldText}>
+              Does your company currently employ people?
+            </Text>
+            <RadioButtonRN
+              data={options}
+              box={false}
+              selectedBtn={(e) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  haveCurrentEmployees: e.state,
+                }))
+              }
+              icon={<AntDesign name="rocket1" size={25} color="#196100" />}
             />
           </View>
-        </View>
-        <View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.inputField}
-              placeholder="Phone number"
-              onChangeText={(newText) => setFormData((prevState) => ({ ...prevState, phone: newText }))}
-              defaultValue={formData.phone}
+          <View style={styles.agreementContainer}>
+            <CheckBox
+              value={isAgreementChecked}
+              onClick={() => setIsAgreementChecked(!isAgreementChecked)}
+              style={styles.agreementCheckbox}
+              isChecked={isAgreementChecked}
             />
+            <Text style={styles.agreementText}>
+              I electronically sign and reconfirm my agreement to the Terms and conditions
+            </Text>
           </View>
         </View>
-        
-        
-        
-        <ActionButton text={"Save and continue"} link={"form/review/personalreview"} style={{position:"relative"}}/>
+      </ScrollView>
+      <View style={styles.actionButtonContainer}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={submitHandler}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.actionButtonText}>Save and continue</Text>
+          )}
+        </TouchableOpacity>
       </View>
-    </View></ScrollView>
+    </View>
   );
 };
 
 export default technical;
 
 const styles = StyleSheet.create({
-  inputContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+    paddingHorizontal: 20,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 100, // Ensure there's space for the button
+    paddingTop: 30,
+  },
+  pageLinks: {
     flexDirection: "row",
-    gap: 10,
-    borderColor: "lightgrey",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  pageLinkText: {
+    fontSize: 13,
+    color: "grey",
+    marginHorizontal: 10,
+  },
+  activePageLinkText: {
+    fontSize: 13,
+    color: "#196100",
+    marginHorizontal: 10,
+  },
+  questionsContainer: {
+    flexDirection: "column",
+    gap: 20,
+  },
+  question: {
+    marginBottom: 20,
+  },
+  boldText: {
+    fontWeight: "bold",
+  },
+  textArea: {
+    height: "auto",
     borderWidth: 1,
+    borderColor: "lightgrey",
     borderRadius: 10,
+    marginTop: 10,
+    padding: 10,
+  },
+  actionButtonContainer: {
+    padding: 20,
+    backgroundColor: "white",
+  },
+  agreementContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 16,
+  },
+  agreementCheckbox: {
+    marginRight: 8,
+  },
+  agreementText: {
+    flex: 1,
+  },
+  actionButton: {
+    backgroundColor: "#196100",
+    borderRadius: 15,
+    paddingVertical: 15,
     alignItems: "center",
   },
-  inputField: {
-    height: 150,
-    placeholderTextColor: "lightgrey",
-    // borderLeftWidth: 1,
-    // borderLeftColor: "lightgrey",
-    paddingHorizontal: 10,
-    width: "100%",
+  actionButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

@@ -5,6 +5,8 @@ import {
   FlatList,
   ScrollView,
   ActivityIndicator,
+  Button,
+  TouchableOpacity
 } from "react-native";
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import { Link } from "expo-router";
@@ -13,7 +15,6 @@ import { Entypo } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import * as SecureStore from "expo-secure-store";
-
 
 const DATA = [
   {
@@ -70,27 +71,30 @@ const TipItem = ({ item }) => (
 const Index = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
-  
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const auth = await SecureStore.getItemAsync('authenticated');
-        if (auth != 'true') {
-          navigation.navigate("login");
-        }
-        console.log('Authentication status successfully.');
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    checkAuth()
-  }, []);
+  const { authState } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, [navigation]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
+        }
+        console.log("Authentication status successfully.");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -117,7 +121,30 @@ const Index = () => {
           />
         </View>
       </View>
-      <ActionButton text={"I'm ready to pitch"} link={"form/personal"} />
+      <View style={{display:"flex", flexDirection:"column",gap:10, paddingTop:4}}>
+      <TouchableOpacity
+          style={styles.actionButton}
+          onPress={()=> navigation.navigate("/events")}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.actionButtonText}>Go back home</Text>
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={()=> navigation.navigate("form/personal")}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.actionButtonText}>I'm ready to pitch</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -183,5 +210,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     flexDirection: "row",
     alignItems: "center",
+  },actionButton: {
+    backgroundColor: "#196100",
+    borderRadius: 15,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  actionButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

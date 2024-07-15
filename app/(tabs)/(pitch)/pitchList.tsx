@@ -1,105 +1,119 @@
-import { ScrollView, StyleSheet, Text, View, Button,Alert } from "react-native";
-import React, {useEffect, useState} from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  Alert,
+} from "react-native";
+import React, { useEffect, useState } from "react";
 import { Link } from "expo-router";
 import { axi, useAuth } from "../../context/AuthContext";
 import ActionButton from "../../../components/actionButton";
 import { useNavigation } from "@react-navigation/native";
-import * as SecureStore from "expo-secure-store";
-
-
-
-
-const mockData = [
-  {
-    id: "#JI456M9",
-    date: "Friday, 08 Mar",
-    description: "This is a place holder text to show the first two lines of the brief description of your business",
-    status: "pending"
-  },
-  {
-    id: "#Y98MYO",
-    date: "Friday, 08 Mar",
-    description: "This is a place holder text to show the first two lines of the brief description of your business",
-    status: "approved"
-  },
-  {
-    id: "#BN234T",
-    date: "Friday, 08 Mar",
-    description: "This is a place holder text to show the first two lines of the brief description of your business",
-    status: "rejected"
-  },
-];
+import { AntDesign } from "@expo/vector-icons";
 
 const PitchList = () => {
   const navigation = useNavigation();
-  const [data, setData] = useState({})
+  const [data, setData] = useState([]);
+  const { authState } = useAuth();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const auth = await SecureStore.getItemAsync('authenticated');
-        if (auth != 'true') {
-          navigation.navigate("login");
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
         }
-        console.log('Authentication status successfully.');
+        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
     };
-    const getData = async() => {
+
+    const getData = async () => {
       try {
-        const headers = { Authorization: `Bearer ${SecureStore.getItem("token")}` };
-      const response = await axi.get(`/pitch/get-user-pitches/`, {headers});
-        console.log("Response data:", response.data.pitches); // Add this line to log the response data
-        setData(response.data.pitches);
+        const headers = { Authorization: `Bearer ${authState.token}` };
+        const response = await axi.get(`/pitch/get-user-pitches/`, { headers });
+        const sortedData = response.data.pitches.sort(
+          (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+        );
+        setData(sortedData);
+        console.log(s);
         Alert.alert("Data fetched successfully");
       } catch (error) {
-        console.log("Error fetching data:", error); // Add this line to log any errors
+        console.log("Error fetching data:", error);
       }
-    }
-    checkAuth()
-    getData()
+    };
+
+    checkAuth();
+    getData();
   }, []);
-  
-    
-  // console.log(data)
+
+  const getData = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${authState.token}` };
+      const response = await axi.get(`/pitch/get-user-pitches/`, { headers });
+      const sortedData = response.data.pitches.sort(
+        (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+      );
+      setData(sortedData);
+      Alert.alert("Data fetched successfully");
+    } catch (error) {
+      console.log("Error fetching data:", error);
+    }
+  };
+
+  const deleteHandler = (id) => {
+    const headers = { Authorization: `Bearer ${authState.token}` };
+    axi.delete(`/pitch/delete-pitch/${id}`, { headers });
+    getData();
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        {mockData.map((item) => (
+        {data.map((item) => (
           <View
             key={item.id}
             style={[
               styles.card,
-              item.status === "pending" && styles.pending,
-              item.status === "approved" && styles.approved,
-              item.status === "rejected" && styles.rejected,
+              item.review_status === "pending" && styles.pending,
+              item.review_status === "approved" && styles.approved,
+              item.review_status === "rejected" && styles.rejected,
             ]}
-            
           >
             <View style={styles.innerCard}>
-              <Text>{item.date}</Text>
-              <Text style={styles.idText}>{item.id}</Text>
-              <Text>{`"${item.description}..."`}</Text>
+              <View style={{display:"flex" ,flexDirection:"row", justifyContent:"space-between"}}>
+                <Text>{new Date(item.updated_at).toLocaleDateString()}</Text>
+                <AntDesign
+                  name="delete"
+                  size={24}
+                  color="black"
+                  onPress={() => deleteHandler(item.id)}
+                />
+              </View>
+              {/* <Text style={styles.idText}>{item.id}</Text> */}
+              <Text>{`"${
+                item.competition_questions?.business_description ||
+                "No description"
+              }..."`}</Text>
               <Button
-              title="View Pitch Info"
-              color={"#196100"}
-              onPress={() =>
-                navigation.navigate("dynamics/viewPitchInfo", {
-                  itemId: item.id,
-                })
-              }
-            />
+                title="View Pitch Info"
+                color={"#196100"}
+                onPress={() =>
+                  navigation.navigate("dynamics/viewPitchInfo", {
+                    itemId: item.id,
+                  })
+                }
+              />
             </View>
             <Text style={styles.statusText}>{item.status}</Text>
           </View>
         ))}
       </ScrollView>
       <View style={styles.actionButtonContainer}>
-        <ActionButton
-          text={"Create new pitch"}
-          link={"/form"}
-        />
+        <ActionButton text={"Create new pitch"} link={"/form"} />
       </View>
     </View>
   );
@@ -110,7 +124,7 @@ export default PitchList;
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "white",
-    paddingBottom:150
+    paddingBottom: 150,
   },
   scrollView: {
     paddingHorizontal: 10,

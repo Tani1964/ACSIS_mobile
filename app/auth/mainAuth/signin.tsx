@@ -8,43 +8,94 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Button
 } from "react-native";
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
-import * as SecureStore from 'expo-secure-store';
+import { useAuth } from "@/app/context/AuthContext";
+import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
+import * as SecureStore from "expo-secure-store";
 
-const Signin = () => {
+const signin = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
+  const { authState, setAuthState } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
+
+  // useEffect(() => {
+  //   configureGoogleSignIn();
+  // }, []);
+
+  // const configureGoogleSignIn = () => {
+  //   GoogleSignin.configure({
+  //     webClientId: '1077796380960-nvmijg1o0975tfq11j5tpiejjm6bfvqr.apps.googleusercontent.com',
+  //     androidClientId:"1077796380960-p35pbur9rtjmjnuo4209r108d50ilesu.apps.googleusercontent.com",
+  //     iosClientId:"1077796380960-mv6j98d90g6gjfpjrt41folnoqrk2ppt.apps.googleusercontent.com",
+  //     // offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
+  //   });
+  // };
 
   const submitHandler = async () => {
     setLoading(true);
     try {
       const response = await axi.post("/auth/login", formData);
-      await SecureStore.setItemAsync('token', response?.data?.token);
-      await SecureStore.setItemAsync('authenticated', 'true');
-      navigation.navigate("form/index");
+      await SecureStore.setItemAsync("token", response.data.token);
+      const token = await SecureStore.getItemAsync("token")
+      await setAuthState({
+        token: token ,
+        authenticated: true,
+      });
+      navigation.navigate("index");
+      console.log("ghhhh")
+      console.log(token)
     } catch (error) {
-      await SecureStore.setItemAsync('authenticated', 'false'); // Ensure this is set to false on failure
       Alert.alert("Login Failed", "Please check your email and password.");
       console.log(error);
     } finally {
       setLoading(false);
     }
   };
+
+  // const googleSignIn = async () => {
+  //   setLoading(true);
+  //   try {
+  //     await GoogleSignin.hasPlayServices();
+  //     const userInfo = await GoogleSignin.signIn();
+  //     const response = await axi.post("/auth/google-login", {
+  //       idToken: userInfo.idToken,
+  //     });
+  //     await setAuthState({
+  //       token: response.data.token,
+  //       authenticated: true,
+  //     });
+  //     navigation.navigate("form/index");
+  //   } catch (error) {
+  //     if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+  //       Alert.alert("Login Cancelled", "Google Sign-In was cancelled.");
+  //     } else if (error.code === statusCodes.IN_PROGRESS) {
+  //       Alert.alert("Login In Progress", "Google Sign-In is in progress.");
+  //     } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+  //       Alert.alert("Play Services Error", "Play services not available or outdated.");
+  //     } else {
+  //       Alert.alert("Login Failed", "An error occurred during Google Sign-In.");
+  //     }
+  //     console.log(error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -85,7 +136,7 @@ const Signin = () => {
             />
           </View>
           <TouchableOpacity
-            onPress={() => navigation.navigate("/auth/mainAuth/forgotPassword")}
+            onPress={() => navigation.navigate("auth/forgotPassword/forgotPassword")}
           >
             <Text style={styles.forgotPassword}>Forgot your password?</Text>
           </TouchableOpacity>
@@ -103,18 +154,23 @@ const Signin = () => {
               <Text style={styles.signinButtonText}>Sign in</Text>
             )}
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.googleButton}
-            onPress={() => {
-              /* Google Signin action */
-            }}
+            onPress={googleSignIn}
+            disabled={loading}
           >
-            <Image
-              source={require("../../../assets/images/google-logo.png")}
-              style={styles.googleLogo}
-            />
-            <Text style={styles.googleButtonText}>Sign in with Google</Text>
-          </TouchableOpacity>
+            {loading ? (
+              <ActivityIndicator color="black" />
+            ) : (
+              <>
+                <Image
+                  source={require("../../../assets/images/google-logo.png")}
+                  style={styles.googleLogo}
+                />
+                <Text style={styles.googleButtonText}>Sign in with Google</Text>
+              </>
+            )}
+          </TouchableOpacity> */}
         </View>
 
         <View style={styles.footerContainer}>
@@ -130,7 +186,7 @@ const Signin = () => {
   );
 };
 
-export default Signin;
+export default signin;
 
 const styles = StyleSheet.create({
   scrollContainer: {

@@ -7,7 +7,7 @@ const One = () => {
   const navigation = useNavigation();
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
   return (

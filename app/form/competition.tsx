@@ -1,15 +1,16 @@
 import React, { useState, useLayoutEffect, useEffect } from "react";
-import { StyleSheet, Text, View, TextInput, ScrollView, Alert } from "react-native";
+import { StyleSheet, Text, View, TextInput, ScrollView, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
-import ActionButton from "../../components/actionButton";
-import RadioButtonRN from "radio-buttons-react-native";
-import { useNavigation } from "@react-navigation/native";
-import CheckBox from "react-native-check-box";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
-import * as SecureStore from "expo-secure-store";
+import { useAuth } from "../context/AuthContext";
 
-const Competition = () => {
+const competition = () => {
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
+  const { authState } = useAuth();
+  const route = useRoute();
+  const { id } = route.params;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -17,45 +18,42 @@ const Competition = () => {
     });
   }, [navigation]);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const auth = await SecureStore.getItemAsync('authenticated');
-        if (auth != 'true') {
-          navigation.navigate("login");
-        }
-        console.log('Authentication status successfully.');
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    checkAuth()
-  }, []);
+  // useEffect(() => {
+  //   const checkAuth = async () => {
+  //     try {
+  //       const auth = authState.authenticated;
+  //       if (!auth) {
+  //         navigation.navigate("login");
+  //       }
+  //       console.log('Authentication status successfully.');
+  //     } catch (error) {
+  //       console.error(error);
+  //     }
+  //   };
+  //   checkAuth();
+  // }, []);
 
   const [formData, setFormData] = useState({
-    haveCurrentInvestors: false,
-    investorsInfo: "",
-    haveDebts: false,
-    debtsInfo: "",
-    haveCurrentEmployees: false,
+    business_name: "",
+    businessDescription: "",
+    reasonOfInterest: "",
+    investmentPrizeUsagePlan: "",
+    impactPlanWithInvestmentPrize: "",
+    summaryOfWhyYouShouldParticipate: "",
   });
 
-  const [isAgreementChecked, setIsAgreementChecked] = useState(false);
-
-  const options = [
-    { label: "yes", state: true },
-    { label: "no", state: false },
-  ];
-
   const submitHandler = async () => {
+    setLoading(true);
     try {
-      // Uncomment the line below once axi is configured
-      const response = await axi.post("/pitch/update-pitch?step=competition_questions", formData);
-      console.log("Form submitted successfully:", formData);
-      Alert.alert("Success", "Your Competition information has been saved.");
-      navigation.navigate("/form/review/personalreview"); // Navigate to the next screen after submission
+      const headers = { Authorization: `Bearer ${authState.token}` };
+      console.log(formData)
+      // const response = await axi.patch(`/pitch/update-pitch/${id}/competition_questions`, formData, { headers });
+      Alert.alert("Success", "Yolur competition information has been saved.");
+      // navigation.navigate("form/technical", {id:id});
     } catch (error) {
-      console.error("Error submitting form:", error);
+      Alert.alert("Error", "There was an error submitting the form. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -89,109 +87,136 @@ const Competition = () => {
         <View style={styles.questionsContainer}>
           <View style={styles.question}>
             <Text style={styles.boldText}>
-              Does your company have any current investors?
+              Business Name
             </Text>
-            <RadioButtonRN
-              data={options}
-              box={false}
-              selectedBtn={(e) =>
+            <TextInput
+              style={styles.textArea}
+              textAlignVertical="top"
+              placeholder="Business name"
+              value={formData.business_name}
+              onChangeText={(newText) =>
                 setFormData((prevState) => ({
                   ...prevState,
-                  haveCurrentInvestors: e.state,
+                  business_name: newText,
                 }))
               }
-              icon={<AntDesign name="rocket1" size={25} color="#196100" />}
             />
-            {formData.haveCurrentInvestors && (
-              <TextInput
-                style={styles.textArea}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                placeholder="Please specify..."
-                onChangeText={(newText) =>
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    investorsInfo: newText,
-                  }))
-                }
-              />
-            )}
           </View>
           <View style={styles.question}>
             <Text style={styles.boldText}>
-              Do you have any existing debt or liabilities which we should be
-              aware of?
+              Please provide a brief description of your Business
             </Text>
-            <RadioButtonRN
-              data={options}
-              box={false}
-              selectedBtn={(e) =>
+            <TextInput
+              style={styles.textArea}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              placeholder="(200 words max)"
+              value={formData.businessDescription}
+              onChangeText={(newText) =>
                 setFormData((prevState) => ({
                   ...prevState,
-                  haveDebts: e.state,
+                  businessDescription: newText,
                 }))
               }
-              icon={<AntDesign name="rocket1" size={25} color="#196100" />}
             />
-            {formData.haveDebts && (
-              <TextInput
-                style={styles.textArea}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                placeholder="Please specify..."
-                onChangeText={(newText) =>
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    debtsInfo: newText,
-                  }))
-                }
-              />
-            )}
           </View>
           <View style={styles.question}>
             <Text style={styles.boldText}>
-              Does your company currently employ people?
+              Why are you interested in this competition?
             </Text>
-            <RadioButtonRN
-              data={options}
-              box={false}
-              selectedBtn={(e) =>
+            <TextInput
+              style={styles.textArea}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              placeholder="(200 words max)"
+              value={formData.reasonOfInterest}
+              onChangeText={(newText) =>
                 setFormData((prevState) => ({
                   ...prevState,
-                  haveCurrentEmployees: e.state,
+                  reasonOfInterest: newText,
                 }))
               }
-              icon={<AntDesign name="rocket1" size={25} color="#196100" />}
             />
           </View>
-          <View style={styles.agreementContainer}>
-            <CheckBox
-              value={isAgreementChecked}
-              onClick={() => setIsAgreementChecked(!isAgreementChecked)}
-              style={styles.agreementCheckbox}
-              isChecked={isAgreementChecked}
-            />
-            <Text style={styles.agreementText}>
-              I electronically sign and reconfirm my agreement to the Terms and
-              conditions
+          <View style={styles.question}>
+            <Text style={styles.boldText}>
+              How do you plan to use the investment prize if you win?
             </Text>
+            <TextInput
+              style={styles.textArea}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              placeholder="(200 words max)"
+              value={formData.investmentPrizeUsagePlan}
+              onChangeText={(newText) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  investmentPrizeUsagePlan: newText,
+                }))
+              }
+            />
+          </View>
+          <View style={styles.question}>
+            <Text style={styles.boldText}>
+              What impact do you hope to achieve with investment into your vision?
+            </Text>
+            <TextInput
+              style={styles.textArea}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              placeholder="(200 words max)"
+              value={formData.impactPlanWithInvestmentPrize}
+              onChangeText={(newText) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  impactPlanWithInvestmentPrize: newText,
+                }))
+              }
+            />
+          </View>
+          <View style={styles.question}>
+            <Text style={styles.boldText}>
+              Please provide a short summary of why you should be given the opportunity to be on PITCH IT TO CLINCH IT
+            </Text>
+            <TextInput
+              style={styles.textArea}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              placeholder="(200 words max)"
+              value={formData.summaryOfWhyYouShouldParticipate}
+              onChangeText={(newText) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  summaryOfWhyYouShouldParticipate: newText,
+                }))
+              }
+            />
           </View>
         </View>
       </ScrollView>
       <View style={styles.actionButtonContainer}>
-        <ActionButton
-          text={"Save and continue"}
+        <TouchableOpacity
+          style={styles.actionButton}
           onPress={submitHandler}
-          link={"/form/review/personalreview"}
-        />
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.actionButtonText}>Save and continue</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-export default Competition;
+export default competition;
 
 const styles = StyleSheet.create({
   container: {
@@ -242,15 +267,15 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "white",
   },
-  agreementContainer: {
-    flexDirection: "row",
+  actionButton: {
+    backgroundColor: "#196100",
+    borderRadius: 15,
+    paddingVertical: 15,
     alignItems: "center",
-    marginTop: 16,
   },
-  agreementCheckbox: {
-    marginRight: 8,
-  },
-  agreementText: {
-    flex: 1,
+  actionButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

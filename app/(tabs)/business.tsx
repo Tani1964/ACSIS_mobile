@@ -1,8 +1,10 @@
-import { ScrollView, StyleSheet, Text, View, Button, Alert } from "react-native";
 import React, { useEffect, useState } from "react";
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Image, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
+import PlaceholderImage from "../../assets/images/mapPreview.jpg"; // replace with an appropriate image
 
 const mockData = [
   {
@@ -18,7 +20,7 @@ const mockData = [
     date: "Friday, 08 Mar",
     description:
       "This is a place holder text to show the first two lines of the brief description of your business",
-    location: "kenya",
+    location: "Kenya",
     name: "ggg",
   },
   {
@@ -50,18 +52,26 @@ const mockData = [
 const Business = () => {
   const navigation = useNavigation();
   const [data, setData] = useState([]);
+  const { authState, setAuthState } = useAuth();
 
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await axi.get(`/pitch/get-all-pitches/`);
-        console.log("Response data:", response.data.pitches); // Add this line to log the response data
-        setData( response.data.pitches);
-        Alert.alert("Data fetched successfully");
+        const token = await authState.token;
+        if (token) {
+          const headers = { Authorization: `Bearer ${token}` };
+          const response = await axi.get(`/get-businesses/`, { headers });
+          console.log("Response data:", response.data.pitches);
+          setData(response.data.pitches);
+          Alert.alert("Data fetched successfully");
+        } else {
+          console.log("Token not found");
+        }
       } catch (error) {
-        console.log("Error fetching data:", error); // Add this line to log any errors
+        console.log("Error fetching data:", error);
       }
     };
+
     getData();
   }, []);
 
@@ -77,17 +87,18 @@ const Business = () => {
               <Text style={styles.companyName}>{item.name || "Unknown"}</Text>
             </View>
             <Text style={styles.description}>{item.description}</Text>
-            <Text style={styles.date}>{item.location}</Text>
-            {/* <Text style={styles.date}>{item.date}</Text> */}
-            <Button
-              title="View Pitch Info"
-              color={"#196100"}
-              onPress={() =>
-                navigation.navigate("dynamics/viewBusiness", {
-                  itemId: item.id,
-                })
-              }
-            />
+            <Text style={styles.location}>{item.location}</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("dynamics/viewBusiness", { itemId: item.id })}>
+              <Image source={PlaceholderImage} style={styles.businessImage} />
+            </TouchableOpacity>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.button} onPress={() => alert("More Info clicked")}>
+                <Text style={styles.buttonText}>More Info</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={() => alert("Contact clicked")}>
+                <Text style={styles.buttonText}>Contact</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -100,9 +111,9 @@ export default Business;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f8f8f8",
     paddingTop: 20,
-    backgroundColor: "white",
-    paddingBottom: 60,
+    paddingBottom: 90,
   },
   scrollView: {
     paddingHorizontal: 10,
@@ -147,9 +158,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
-  date: {
-    fontSize: 12,
-    color: "#aaa",
-    marginTop: 5,
+  businessImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  button: {
+    backgroundColor: "#196100",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 });

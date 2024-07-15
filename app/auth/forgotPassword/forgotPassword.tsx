@@ -1,4 +1,12 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native";
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
@@ -20,44 +28,62 @@ const ForgotPassword = () => {
     password: "",
   });
 
-  const resendPassword = async() => {
-    await axi.get(`/user/password/resend-forgot-password-code?email=${formData.email}`)
-    Alert.prompt('The code has been sent again, please check your email')
-  }
+  const resendPassword = async () => {
+    try {
+      await axi.post(`/user/password/request-forgot-password-email`,{email: formData.email} );
+      Alert.prompt("The code has been sent again, please check your email");
+      navigation.navigate("auth/forgotPassword/createNew", {email:formData.email})
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const verifyPassword = async () => {
-    await axi.post(`/user/password/verify-forgot-password-code`)
-    Alert.prompt('The code has been verified')
-  }
-  
+    try {
+      await axi.post(`/user/password/verify-forgot-password-code`);
+      Alert.prompt("The code has been verified");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        <Ionicons name="arrow-back" size={24} color="black" style={styles.backIcon} />
-        <Text style={styles.headerTitle} onPress={resendPassword}>Forgot password?</Text>
-        <Text style={styles.headerSubtitle}>Enter the email sent registered to your account and we will email you a link to reset your password
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color="black"
+          style={styles.backIcon}
+        />
+        <Text style={styles.headerTitle} onPress={resendPassword}>
+          Forgot password?
+        </Text>
+        <Text style={styles.headerSubtitle}>
+          Enter the email sent registered to your account and we will email you
+          a link to reset your password
         </Text>
 
         {/* Code Input */}
         <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={24} color="lightgrey" />
-            <TextInput
-              style={styles.inputField}
-              placeholder="Email address"
-              onChangeText={(newText) => setFormData((prevState) => ({ ...prevState, email: newText }))}
-              defaultValue={formData.email}
-              keyboardType="email-address"
-            />
-          </View>
-
+          <Ionicons name="mail-outline" size={24} color="lightgrey" />
+          <TextInput
+            style={styles.inputField}
+            placeholder="Email address"
+            onChangeText={(newText) =>
+              setFormData((prevState) => ({ ...prevState, email: newText }))
+            }
+            defaultValue={formData.email}
+            keyboardType="email-address"
+          />
+        </View>
 
         {/* Verify Button */}
         <TouchableOpacity
           style={styles.verifyButton}
           onPress={() => {
             /* Verify action */
-            verifyPassword()
+            resendPassword();
           }}
         >
           <Text style={styles.verifyButtonText}>Continue</Text>

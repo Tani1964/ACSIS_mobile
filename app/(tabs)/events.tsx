@@ -1,95 +1,120 @@
-import { ScrollView, StyleSheet, Text, View, Button } from "react-native";
 import React, { useState, useEffect } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as SecureStore from "expo-secure-store";
 import { useNavigation } from "@react-navigation/native";
-import { axi } from "../context/AuthContext";
+import { axi } from "@/app/context/AuthContext";
+import { useAuth } from "@/app/context/AuthContext";
+import MapPreview from "../../assets/images/mapPreview.jpg";
+import * as SecureStore from "expo-secure-store";
 
-const mockEvents = [
-  {
-    id: "#EVT123",
-    date: "Saturday, 10 Jul",
-    description: "An exciting event that showcases local talents and skills.",
-    location: "Lagos, Nigeria",
-    name: "Talent Showcase",
-  },
-  {
-    id: "#EVT456",
-    date: "Sunday, 15 Aug",
-    description:
-      "A workshop on the latest trends in technology and innovation.",
-    location: "Nairobi, Kenya",
-    name: "Tech Workshop",
-  },
-  {
-    id: "#EVT789",
-    date: "Wednesday, 22 Sep",
-    description: "A music festival featuring local and international artists.",
-    location: "Dakar, Senegal",
-    name: "Music Fest",
-  },
-];
+const formatDateTime = (dateTimeString) => {
+  const date = new Date(dateTimeString);
+  const dateOptions = { weekday: "long", month: "short", day: "numeric" };
+  const timeOptions = { hour: "2-digit", minute: "2-digit" };
+  return `${date.toLocaleDateString(
+    "en-US",
+    dateOptions
+  )}, ${date.toLocaleTimeString("en-US", timeOptions)}`;
+};
 
-const EventsScreen = () => {
-  const [authState, setAuthState] = useState(null);
+const Events = () => {
   const navigation = useNavigation();
-  const [data, setData] = useState([])
+  const [events, setEvents] = useState([]);
+  const { authState, setAuthState } = useAuth();
 
   useEffect(() => {
-    const fetchAuthState = async () => {
-      const result = await SecureStore.getItemAsync("authenticated");
-      setAuthState(result);
+    const fetchData = async () => {
+      try {
+        const response = await axi.get("/user/get-all-events");
+        setEvents(response.data); // Assuming response.data is an array of events
+        console.log(response.data);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
     };
-    const getData = async() => {
-      const token = await SecureStore.getItemAsync("token")
-      const headers = { Authorization: `Bearer ${token}` };
 
-      // const response = await axi.get()
-      // setData(response.data)
-
-    }
-
-    fetchAuthState();
+    fetchData();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Button
-        title="View authState"
-        color={"#196100"}
-        onPress={() => alert(`${authState}`)}
-      />
       <ScrollView style={styles.scrollView}>
-        {mockEvents.map((event) => (
-          <View key={event.id} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="calendar" size={24} color="white" />
+        {events
+          ? events.map((event) => (
+              <View key={event.id} style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.eventName}>
+                    {event.title || "Unnamed Event"}
+                  </Text>
+                  <Text style={styles.dateText}>
+                    {formatDateTime(event.date_time)}
+                  </Text>
+                </View>
+                <Text style={styles.timeText}>
+                  Expected duration: {event.duration_hours} hours
+                </Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate("maps/fullView", {
+                      location: event.location,
+                      event: event,
+                    })
+                  }
+                >
+                  <Image source={MapPreview} style={styles.eventImage} />
+                </TouchableOpacity>
+                <View style={styles.venueContainer}>
+                  <View style={styles.venueDetails}>
+                    <Text style={styles.venueName}>{event.description}</Text>
+                    {/* <Text style={styles.venueInfo}>
+                  {event.venueDistance} • {event.venueRating} ★ (
+                  {event.reviewsCount} reviews)
+                </Text> */}
+                    <Text style={styles.location}>{event.location}</Text>
+                  </View>
+                </View>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => (
+                      console.log(event.registrationLink),
+                      event.registrationLink?
+                      navigation.navigate("maps/linkWeb", {
+                        link: event.registrationLink,
+                      }): Alert.alert("No need to register")
+                    )}
+                  >
+                    <Text style={styles.buttonText}>Register</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() =>
+                      navigation.navigate("maps/fullView", {
+                        location: event.location,
+                        event: event,
+                      })
+                    }
+                  >
+                    <Text style={styles.buttonText}>More Info</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <Text style={styles.eventName}>
-                {event.name || "Unnamed Event"}
-              </Text>
-            </View>
-            <Text style={styles.description}>{event.description}</Text>
-            <Text style={styles.location}>{event.location}</Text>
-            <Text style={styles.date}>{event.date}</Text>
-            <Button
-              title="View Event"
-              color={"#196100"}
-              onPress={() =>
-                navigation.navigate("dynamics/viewEvent", {
-                  itemId: event.id,
-                })
-              }
-            />
-          </View>
-        ))}
+            ))
+          : "Loading..."}
       </ScrollView>
     </View>
   );
 };
 
-export default EventsScreen;
+export default Events;
 
 const styles = StyleSheet.create({
   container: {
@@ -114,36 +139,63 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#196100",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   eventName: {
-    flex: 1,
-    marginLeft: 10,
     fontSize: 18,
     fontWeight: "600",
     color: "#333",
   },
-  description: {
+  dateText: {
     fontSize: 14,
     color: "#666",
-    marginBottom: 5,
+  },
+  timeText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  eventImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  venueContainer: {
+    flexDirection: "row",
+    marginBottom: 10,
+  },
+  venueDetails: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  venueName: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  venueInfo: {
+    fontSize: 14,
+    color: "#666",
   },
   location: {
     fontSize: 14,
     color: "#666",
   },
-  date: {
-    fontSize: 12,
-    color: "#aaa",
-    marginTop: 5,
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  button: {
+    backgroundColor: "#196100",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 });

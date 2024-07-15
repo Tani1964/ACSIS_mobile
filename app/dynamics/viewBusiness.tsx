@@ -2,13 +2,18 @@ import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { useLocalSearchParams } from 'expo-router';
 import { useRoute } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 
-const viewBusiness = () => {
+const viewBusiness = async() => {
   const route = useRoute();
-  const { itemId } = route.params;
+  const { id } = route.params;
+  const {authState} = useAuth
+  const auth = await authState
+  console.log(auth)
   return (
     <View>
-      <Text>{itemId}</Text>
+      
+      <Text>{id}</Text>
     </View>
   )
 }

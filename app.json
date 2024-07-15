@@ -13,13 +13,29 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "buundleIdentifier": "com.acsis.googleauthexporeactnative",
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.1077796380960-mv6j98d90g6gjfpjrt41folnoqrk2ppt"
+            ]
+          }
+        ]
+      },
+      "bundleIdentifier": "com.tani1964.ACSIS"
     },
     "android": {
+      "packages": "com.acsis.googleauthexporeactnative",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -34,10 +50,24 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps._some_id_here_"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow ACSIS to use your location."
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "83c7b800-c4ad-4f87-9504-19ac3830aa11"
+      }
     }
   }
 }

@@ -1,19 +1,25 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,ActivityIndicator
+} from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import ActionButton from "@/components/actionButton";
 import { Link } from "expo-router";
 import React, { useState, useLayoutEffect, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { axi } from "../../context/AuthContext";
-import * as SecureStore from "expo-secure-store";
-import { useLocalSearchParams } from 'expo-router';
-import { useRoute } from '@react-navigation/native';
-
+import { axi, useAuth } from "../../context/AuthContext";
+import { useLocalSearchParams } from "expo-router";
+import { useRoute } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 
 const PersonalReviewScreen = () => {
   const navigation = useNavigation();
-  const [data, setData] = useState({})
-
+  const [data, setData] = useState({});
+  const { authState } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -21,33 +27,50 @@ const PersonalReviewScreen = () => {
     });
   }, [navigation]);
   const route = useRoute();
-  const { itemId } = route.params;
+  const { id } = route.params;
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const auth = await SecureStore.getItemAsync('authenticated');
-        if (auth != 'true') {
-          navigation.navigate("login");
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
         }
-        console.log('Authentication status successfully.');
+        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
     };
-    const getData = async() => {
-      const headers = { Authorization: `Bearer ${SecureStore.getItem("token")}` };
-      const response = await axi.get(`/api/v1/pitch/get-pitch/${itemId}`, {headers})
-      setData(response.data)
-      console.log(response)
-    }
-    checkAuth()
-    getData()
+    const getData = async () => {
+      const headers = { Authorization: `Bearer ${authState.token}` };
+      const response = await axi.get(`/pitch/get-pitch/${id}`, {
+        headers,
+      });
+      setData(response.data.pitch.personal_information);
+      console.log(response);
+    };
+    checkAuth();
+    getData();
   }, []);
+
+  const formatDateTime = (dateTimeString) => {
+    const date = new Date(dateTimeString);
+    const dateOptions = { weekday: "long", month: "short", day: "numeric" };
+    const timeOptions = { hour: "2-digit", minute: "2-digit" };
+    return `${date.toLocaleDateString(
+      "en-US",
+      dateOptions
+    )}, ${date.toLocaleTimeString("en-US", timeOptions)}`;
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Personal Information</Text>
+      <View style={{ display: "flex" }}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="close" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Personal Information</Text>
+      </View>
       <ScrollView>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -95,7 +118,7 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{data.date_of_birth}</Text>
+          <Text style={styles.infoValue}>{formatDateTime(data.date_of_birth)}</Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -123,7 +146,9 @@ const PersonalReviewScreen = () => {
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
-            <Text style={styles.infoLabel}>Do you require any disability support?</Text>
+            <Text style={styles.infoLabel}>
+              Do you require any disability support?
+            </Text>
             <View style={styles.editButton}>
               <Link href="/form/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
@@ -131,7 +156,9 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{data.requires_disability_support? "Yes":"No"}</Text>
+          <Text style={styles.infoValue}>
+            {data.requires_disability_support ? "Yes" : "No"}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -143,10 +170,27 @@ const PersonalReviewScreen = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{data.disability_support_description}</Text>
+          <Text style={styles.infoValue}>
+            {data.disability_support_description}
+          </Text>
         </View>
       </ScrollView>
-      <ActionButton text="Next" link="/form/review/proffesionalreview" />
+      <View style={styles.actionButtonContainer}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() =>(
+            navigation.navigate("form/review/proffesionalreview", { id: id })
+            )
+          }
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.actionButtonText}>Save and continue</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -188,5 +232,19 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     marginTop: 8,
+  },actionButtonContainer: {
+    padding: 20,
+    backgroundColor: "white",
+  },
+  actionButton: {
+    backgroundColor: "#196100",
+    borderRadius: 15,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  actionButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

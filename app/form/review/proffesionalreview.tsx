@@ -1,4 +1,4 @@
-import React, { useState,useLayoutEffect, useEffect } from "react";
+import React, { useState, useLayoutEffect, useEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -6,61 +6,108 @@ import {
   View,
   Pressable,
   TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import ActionButton from "../../../components/actionButton";
 import { Link } from "expo-router";
-import { useNavigation } from '@react-navigation/native';
-import {axi} from "../../context/AuthContext";
-import * as SecureStore from 'expo-secure-store'
-import { useLocalSearchParams } from 'expo-router';
-import { useRoute } from '@react-navigation/native';
-
+import { useNavigation } from "@react-navigation/native";
+import { axi } from "../../context/AuthContext";
+import { useRoute } from "@react-navigation/native";
+import { useAuth } from "../../context/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
 
 const ProfessionalReview = () => {
   const navigation = useNavigation();
-  const [data, setData] = useState({})
+  const [data, setData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const { authState } = useAuth();
+
   
 
+  const route = useRoute();
+  const { id } = route.params;
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, [navigation]);
-  const route = useRoute();
-  const { itemId } = route.params;
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const auth = await SecureStore.getItemAsync('authenticated');
-        if (auth != 'true') {
-          navigation.navigate("login");
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
         }
-        console.log('Authentication status successfully.');
+        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
     };
-    const getData = async() => {
-      const headers = { Authorization: `Bearer ${SecureStore.getItem("token")}` };
-      const response = await axi.get(`/api/v1/pitch/get-pitch/${itemId}`, {headers})
-      setData(response.data)
-      console.log(response)
-    }
-    checkAuth()
-    getData()
+    const getData = async () => {
+      const headers = { Authorization: `Bearer ${authState.token}` };
+      const response = await axi.get(`/pitch/get-pitch/${id}`, {
+        headers,
+      });
+      setData(response.data.pitch.professional_background);
+      console.log(response);
+    };
+    checkAuth();
+    getData();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Professional Review</Text>
+      <View style={{ display: "flex" }}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="close" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Professional Background</Text>
+      </View>
       <ScrollView>
-        <View style={styles.contentContainer}>
-          
+        <View style={styles.infoItem}>
+          <View style={styles.infoHeader}>
+            <Text style={styles.infoLabel}>Current Occupation</Text>
+            <View style={styles.editButton}>
+              <Link href="/form/proffesional">
+                <AntDesign name="edit" size={24} color="#196100" />
+                <Text style={styles.editText}>Edit</Text>
+              </Link>
+            </View>
+          </View>
+          <Text style={styles.infoValue}>{data.current_occupation}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <View style={styles.infoHeader}>
+            <Text style={styles.infoLabel}>Linkedin Profile</Text>
+            <View style={styles.editButton}>
+              <Link href="/form/proffesional">
+                <AntDesign name="edit" size={24} color="#196100" />
+                <Text style={styles.editText}>Edit</Text>
+              </Link>
+            </View>
+          </View>
+          <Text style={styles.infoValue}>{data.linkedin_url}</Text>
         </View>
       </ScrollView>
-      <ActionButton text="Next" link="/form/review/competitionreview" />
+      <View style={styles.actionButtonContainer}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() =>(console.log(id),
+            navigation.navigate("form/review/competitionreview", { id: id })
+          )
+          }
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.actionButtonText}>Save and continue</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -103,5 +150,39 @@ const styles = StyleSheet.create({
     color: "#196100",
     flexDirection: "row",
     alignItems: "center",
+  },
+  actionButtonContainer: {
+    padding: 20,
+    backgroundColor: "white",
+  },
+  actionButton: {
+    backgroundColor: "#196100",
+    borderRadius: 15,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  actionButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },infoItem: {
+    borderBottomColor: "lightgrey",
+    borderBottomWidth: 1,
+    paddingVertical: 20,
+  },
+  infoHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  infoLabel: {
+    fontWeight: "bold",
+  },
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+    infoValue: {
+    marginTop: 8,
   },
 });

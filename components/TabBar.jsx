@@ -2,14 +2,15 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { AntDesign, Ionicons, FontAwesome5, MaterialIcons, Feather } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
-import * as SecureStore from 'expo-secure-store';
+import { useAuth } from "@/app/context/AuthContext";
 
 const TabBar = ({ state, descriptors, navigation }) => {
-    const [authState, setAuthState] = useState(false);
+    const { authState, setAuthState } = useAuth();
+
 
     useEffect(() => {
         const fetchAuthState = async () => {
-            const authValue = await SecureStore.getItemAsync("authenticated");
+            const authValue = await authState.authenticated
             console.log(authValue)
             setAuthState(authValue);
         };
@@ -37,8 +38,9 @@ const TabBar = ({ state, descriptors, navigation }) => {
                         : options.title !== undefined
                             ? options.title
                             : route.name;
-                // console.log(authState)
-                const pitchState = authState ? "(pitch)/pitchList" : "(pitch)/index";
+                console.log(typeof(authState.authenticated))
+                console.log("fff",authState.authenticated == true )
+                const pitchState = authState.authenticated  ? "(pitch)/pitchList" : "(pitch)/index";
 
                 if (!['index', 'events', "business", pitchState].includes(route.name)) return null;
 

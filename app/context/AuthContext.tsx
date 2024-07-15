@@ -9,13 +9,9 @@ interface AuthState {
 
 interface AuthContextProps {
   authState: AuthState;
-  setAuthState: (sate: any)=> void;
-  // onRegister: (email: string, fullName: string, password: string) => Promise<any>;
-  // onLogin: (email: string, password: string) => Promise<any>;
-  // onLogout: () => Promise<void>;
+  setAuthState: React.Dispatch<React.SetStateAction<AuthState>>;
 }
 
-const TOKEN_KEY = "my_jwt";
 export const AuthContext = createContext<AuthContextProps | null>(null);
 
 export const axi = axios.create({
@@ -32,8 +28,28 @@ export const AuthProvider: React.FC = ({ children }) => {
     authenticated: false,
   });
 
+  useEffect(() => {
+    const loadToken = async () => {
+      const token = await SecureStore.getItemAsync(authState.token);
+      console.log("stored:", token);
+
+      if (token) {
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${token}`;
+
+        setAuthState({
+          token: token,
+          authenticated: true,
+        });
+      }
+    };
+    loadToken();
+  }, []);
+  
+
   return (
-    <AuthContext.Provider value={{ authState, setAuthState}}>
+    <AuthContext.Provider value={{ authState, setAuthState }}>
       {children}
     </AuthContext.Provider>
   );

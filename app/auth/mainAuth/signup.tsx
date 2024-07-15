@@ -14,7 +14,7 @@ const Signup = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
@@ -105,7 +105,7 @@ const Signup = () => {
             Already have an account? <Link href="/auth/mainAuth/signin" style={styles.signinLink}>Sign in</Link>
           </Text>
           <Text style={styles.footerNote}>
-            By creating an account you agree to ACSS & PITCH's <Link href="/privacy" style={styles.footerLink}>Privacy policy</Link> and <Link href="/terms" style={styles.footerLink}>Terms of use</Link>
+            By creating an account you agree to ACSS & PITCH's <Link href="/auth/mainAuth/terms." style={styles.footerLink}>Privacy policy</Link> and <Link href="auth/mainAuth/terms" style={styles.footerLink}>Terms of use</Link>
           </Text>
         </View>
       </View>

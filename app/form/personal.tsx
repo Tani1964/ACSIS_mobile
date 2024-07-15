@@ -23,7 +23,6 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useAuth } from "../context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
-import * as SecureStore from "expo-secure-store";
 
 const Personal = () => {
   const [loading, setLoading] = useState(false);
@@ -33,26 +32,26 @@ const Personal = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const auth = await SecureStore.getItemAsync('authenticated');
-        if (auth != 'true') {
-          navigation.navigate("login");
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
         }
-        console.log('Authentication status successfully.');
+        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
     };
-    checkAuth()
+    checkAuth();
   }, []);
 
   const formatDate = (rawDate) => {
     const date = new Date(rawDate);
     const year = date.getFullYear();
-    const month = (`0${date.getMonth() + 1}`).slice(-2);
-    const day = (`0${date.getDate()}`).slice(-2);
+    const month = `0${date.getMonth() + 1}`.slice(-2);
+    const day = `0${date.getDate()}`.slice(-2);
     return `${year}-${month}-${day}`;
   };
-
+  const [id, setId] = useState("");
   const [date, setDate] = useState(new Date());
   const [formData, setFormData] = useState({
     fullName: "",
@@ -62,7 +61,7 @@ const Personal = () => {
     nationality: "",
     ethnicity: "",
     requiresDisabilitySupport: false,
-    disabilityInfo: "",
+    disabilitySupportDescription: "",
   });
   const [showPicker, setShowPicker] = useState(false);
 
@@ -92,23 +91,29 @@ const Personal = () => {
     try {
       const headers = { Authorization: `Bearer ${authState.token}` };
       console.log(formData);
-      const response = await axi.post("/pitch/initiate-pitch", formData, { headers });
-      Alert.alert("Success", "Your personal information has been saved.");
-      const result = axi.get("/pitch/get-pitch", { headers }).then((res) => {
-        const data = res.data.pitch.personal_information;
-        setFormData({
-          fullName: data.fullName,
-          email: data.email,
-          phoneNumber: data.phoneNumber,
-          dateOfBirth: data.dateOfBirth,
-          nationality: data.nationality,
-          ethnicity: data.ethnicity,
-          requiresDisabilitySupport: data.requiresDisabilitySupport,
-          disabilityInfo: data.disabilityInfo,
-        });
+      console.log(headers);
+      const response = await axi.post("/pitch/initiate-pitch", formData, {
+        headers
       });
+      const pitchId = response.data.pitch.id
+      Alert.alert("Success", "Your personal information has been saved.");
 
-      navigation.navigate("form/proffesional");
+      // const result = axi.get("/pitch/get-pitch", { headers }).then((res) => {
+      //   const data = res.data.pitch.personal_information;
+      //   setFormData({
+      //     fullName: data.fullName,
+      //     email: data.email,
+      //     phoneNumber: data.phoneNumber,
+      //     dateOfBirth: data.dateOfBirth,
+      //     nationality: data.nationality,
+      //     ethnicity: data.ethnicity,
+      //     requiresDisabilitySupport: data.requiresDisabilitySupport,
+      //     disabilityInfo: data.disabilityInfo,
+      //   });
+      // });
+      console.log(id);
+
+      navigation.navigate("form/proffesional", { id: pitchId });
     } catch (error) {
       Alert.alert(
         "Error",
@@ -143,13 +148,16 @@ const Personal = () => {
           >
             <View style={styles.header}>
               <Text style={styles.headerTextActive}>
-                Personal Information <AntDesign name="right" size={13} color="black" />
+                Personal Information{" "}
+                <AntDesign name="right" size={13} color="black" />
               </Text>
               <Text style={styles.headerText}>
-                Professional Background <AntDesign name="right" size={13} color="black" />
+                Professional Background{" "}
+                <AntDesign name="right" size={13} color="black" />
               </Text>
               <Text style={styles.headerText}>
-                Competition Questions <AntDesign name="right" size={15} color="black" />
+                Competition Questions{" "}
+                <AntDesign name="right" size={15} color="black" />
               </Text>
             </View>
           </ScrollView>
@@ -161,7 +169,10 @@ const Personal = () => {
                 placeholder="Full Name"
                 value={formData.fullName}
                 onChangeText={(newText) =>
-                  setFormData((prevState) => ({ ...prevState, fullName: newText }))
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    fullName: newText,
+                  }))
                 }
               />
             </View>
@@ -183,7 +194,10 @@ const Personal = () => {
                 placeholder="Phone number with country code"
                 value={formData.phoneNumber}
                 onChangeText={(newText) =>
-                  setFormData((prevState) => ({ ...prevState, phoneNumber: newText }))
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    phoneNumber: newText,
+                  }))
                 }
               />
             </View>
@@ -233,7 +247,10 @@ const Personal = () => {
                 placeholder="Nationality"
                 value={formData.nationality}
                 onChangeText={(newText) =>
-                  setFormData((prevState) => ({ ...prevState, nationality: newText }))
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    nationality: newText,
+                  }))
                 }
               />
             </View>
@@ -248,7 +265,10 @@ const Personal = () => {
                 placeholder="Ethnicity"
                 value={formData.ethnicity}
                 onChangeText={(newText) =>
-                  setFormData((prevState) => ({ ...prevState, ethnicity: newText }))
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    ethnicity: newText,
+                  }))
                 }
               />
             </View>
@@ -275,7 +295,10 @@ const Personal = () => {
                 placeholder="Please specify..."
                 value={formData.disabilityInfo}
                 onChangeText={(newText) =>
-                  setFormData((prevState) => ({ ...prevState, disabilityInfo: newText }))
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    disabilityInfo: newText,
+                  }))
                 }
               />
             )}
@@ -293,7 +316,7 @@ const Personal = () => {
           ) : (
             <Text style={styles.actionButtonText}>Save and continue</Text>
           )}
-                </TouchableOpacity>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -382,4 +405,3 @@ const styles = StyleSheet.create({
     margin: 10,
   },
 });
-

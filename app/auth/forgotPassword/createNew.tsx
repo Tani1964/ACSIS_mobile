@@ -5,15 +5,19 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
+import { useRoute } from "@react-navigation/native";
 
-const createNew = () => {
+const CreateNew = () => {
+  const route = useRoute();
   const navigation = useNavigation();
+  const {email} = route.params
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -23,11 +27,24 @@ const createNew = () => {
   
   const [formData, setFormData] = useState({
     newPassword: "",
+    confirmPassword: "",
     verificationCode: "",
   });
 
   const submit = async() => {
-    await axi.get(`/user/password/update-user-password`, {formData})
+    if (formData.newPassword !== formData.confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
+
+    try {
+      // console.log(email)
+      const response = await axi.patch(`/user/password/update-user-password`, {email:email, newPassword: formData.newPassword, verificationCode: formData.verificationCode});
+      console.log(response);
+      navigation.navigate("auth/forgotPassword/success");
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (
@@ -38,6 +55,7 @@ const createNew = () => {
           size={24}
           color="black"
           style={styles.backIcon}
+          onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerTitle}>Create a new password</Text>
         <Text style={styles.headerSubtitle}>
@@ -45,40 +63,51 @@ const createNew = () => {
           account.
         </Text>
 
-        {/* Code Input */}
+        {/* New Password Input */}
         <View style={styles.inputContainer}>
           <Ionicons name="lock-closed-outline" size={24} color="lightgrey" />
           <TextInput
             style={styles.inputField}
             placeholder="New password"
             onChangeText={(newText) =>
-              setFormData((prevState) => ({ ...prevState, neWpassword: newText }))
-            }
-            defaultValue={formData.newPassword}
-            secureTextEntry={true}
-            //   keyboardType="password"
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={24} color="lightgrey" />
-          <TextInput
-            style={styles.inputField}
-            placeholder="Confirm new password"
-            onChangeText={(newText) =>
-              setFormData((prevState) => ({ ...prevState, password: newText }))
+              setFormData((prevState) => ({ ...prevState, newPassword: newText }))
             }
             defaultValue={formData.newPassword}
             secureTextEntry={true}
           />
         </View>
 
-        {/* Verify Button */}
+        {/* Confirm Password Input */}
+        <View style={styles.inputContainer}>
+          <Ionicons name="lock-closed-outline" size={24} color="lightgrey" />
+          <TextInput
+            style={styles.inputField}
+            placeholder="Confirm new password"
+            onChangeText={(newText) =>
+              setFormData((prevState) => ({ ...prevState, confirmPassword: newText }))
+            }
+            defaultValue={formData.confirmPassword}
+            secureTextEntry={true}
+          />
+        </View>
+
+        {/* Verification Code Input */}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.inputField}
+            placeholder="Verification Code"
+            onChangeText={(newText) =>
+              setFormData((prevState) => ({ ...prevState, verificationCode: newText }))
+            }
+            defaultValue={formData.verificationCode}
+            secureTextEntry={true}
+          />
+        </View>
+
+        {/* Submit Button */}
         <TouchableOpacity
           style={styles.verifyButton}
-          onPress={() => {
-            /* Verify action */
-            submit()
-          }}
+          onPress={submit}
         >
           <Text style={styles.verifyButtonText}>Create new password</Text>
         </TouchableOpacity>
@@ -87,7 +116,7 @@ const createNew = () => {
   );
 };
 
-export default createNew;
+export default CreateNew;
 
 const styles = StyleSheet.create({
   scrollContainer: {
@@ -116,20 +145,6 @@ const styles = StyleSheet.create({
     color: "grey",
     marginBottom: 30,
   },
-  codeInputContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 30,
-  },
-  codeInput: {
-    width: 50,
-    height: 50,
-    borderWidth: 1,
-    borderColor: "lightgrey",
-    borderRadius: 10,
-    textAlign: "center",
-    fontSize: 18,
-  },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -143,14 +158,6 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     paddingHorizontal: 10,
-  },
-  codeInputMargin: {
-    marginHorizontal: 5,
-  },
-  resendText: {
-    textAlign: "center",
-    color: "#196100",
-    marginBottom: 30,
   },
   verifyButton: {
     backgroundColor: "#196100",
