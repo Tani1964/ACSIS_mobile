@@ -4,15 +4,18 @@ import {
   Text,
   View,
   TouchableOpacity,
-  ActivityIndicator,
+  ActivityIndicator
 } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
+import ActionButton from "@/components/actionButton";
 import { Link } from "expo-router";
 import React, { useState, useLayoutEffect, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { axi, useAuth } from "../../context/AuthContext";
+import { useLocalSearchParams } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const PersonalReviewScreen = () => {
   const navigation = useNavigation();
@@ -25,7 +28,7 @@ const PersonalReviewScreen = () => {
       headerShown: false,
     });
   }, [navigation]);
-
+  
   const route = useRoute();
   const { id } = route.params;
 
@@ -41,16 +44,16 @@ const PersonalReviewScreen = () => {
         console.error(error);
       }
     };
-
+    
     const getData = async () => {
-      const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
+      const headers = { Authorization: `Bearer ${authState.token}` };
       const response = await axi.get(`/pitch/get-pitch/${id}`, {
         headers,
       });
       setData(response.data.pitch.personal_information);
       console.log(response);
     };
-
+    
     checkAuth();
     getData();
   }, []);
@@ -78,7 +81,7 @@ const PersonalReviewScreen = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Full Name</Text>
             <View style={styles.editButton}>
-              <Link href="/form/personal">
+              <Link href="/updateform/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -90,7 +93,7 @@ const PersonalReviewScreen = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Email</Text>
             <View style={styles.editButton}>
-              <Link href="/form/personal">
+              <Link href="/updateform/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -102,7 +105,7 @@ const PersonalReviewScreen = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Phone Number</Text>
             <View style={styles.editButton}>
-              <Link href="/form/personal">
+              <Link href="/updateform/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -114,7 +117,7 @@ const PersonalReviewScreen = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Date of Birth</Text>
             <View style={styles.editButton}>
-              <Link href="/form/personal">
+              <Link href="/updateform/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -126,7 +129,7 @@ const PersonalReviewScreen = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Nationality</Text>
             <View style={styles.editButton}>
-              <Link href="/form/personal">
+              <Link href="/updateform/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -138,7 +141,7 @@ const PersonalReviewScreen = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Ethnicity</Text>
             <View style={styles.editButton}>
-              <Link href="/form/personal">
+              <Link href="/updateform/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -150,7 +153,7 @@ const PersonalReviewScreen = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Gender</Text>
             <View style={styles.editButton}>
-              <Link href="/form/personal">
+              <Link href="/updateform/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -164,7 +167,7 @@ const PersonalReviewScreen = () => {
               Do you require any disability support?
             </Text>
             <View style={styles.editButton}>
-              <Link href="/form/personal">
+              <Link href="/updateform/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -178,7 +181,7 @@ const PersonalReviewScreen = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Please specify...</Text>
             <View style={styles.editButton}>
-              <Link href="/form/personal">
+              <Link href="/updateform/personal">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -192,7 +195,10 @@ const PersonalReviewScreen = () => {
       <View style={styles.actionButtonContainer}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => navigation.navigate("form/review/proffesionalreview", { id: id })}
+          onPress={() =>(
+            navigation.navigate("updateform/review/proffesionalreview", { id: id })
+            )
+          }
           disabled={loading}
         >
           {loading ? (

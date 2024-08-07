@@ -17,6 +17,7 @@ import { axi } from "../../context/AuthContext";
 import { useRoute } from "@react-navigation/native";
 import { useAuth } from "../../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ProfessionalReview = () => {
   const navigation = useNavigation();
@@ -47,7 +48,7 @@ const ProfessionalReview = () => {
       }
     };
     const getData = async () => {
-      const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
+      const headers = { Authorization: `Bearer ${authState.token}` };
       const response = await axi.get(`/pitch/get-pitch/${id}`, {
         headers,
       });
@@ -71,7 +72,7 @@ const ProfessionalReview = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Current Occupation</Text>
             <View style={styles.editButton}>
-              <Link href="/form/proffesional">
+              <Link href="/updateform/proffesional">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -83,7 +84,7 @@ const ProfessionalReview = () => {
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Linkedin Profile</Text>
             <View style={styles.editButton}>
-              <Link href="/form/proffesional">
+              <Link href="/updateform/proffesional">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -96,7 +97,7 @@ const ProfessionalReview = () => {
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() =>(console.log(id),
-            navigation.navigate("form/review/competitionreview", { id: id })
+            navigation.navigate("updateform/review/competitionreview", { id: id })
           )
           }
           disabled={loading}

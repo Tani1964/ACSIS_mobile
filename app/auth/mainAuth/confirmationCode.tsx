@@ -1,15 +1,25 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
-import React, { useState,useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useRef } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import  {axi} from "@/app/context/AuthContext";
+import { axi } from "@/app/context/AuthContext";
 
 const ConfirmationCode = () => {
   const [code, setCode] = useState(new Array(6).fill(""));
+  const [loading, setLoading] = useState(false);
+  const inputRefs = useRef([]);
   const navigation = useNavigation();
-  const route = useRoute(); // Access the route prop
-  const {email} = route.params;  // Log the route params
+  const route = useRoute();
+  const { email } = route.params;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -21,34 +31,53 @@ const ConfirmationCode = () => {
     let newCode = [...code];
     newCode[index] = text;
     setCode(newCode);
+
+    if (text && index < inputRefs.current.length - 1) {
+      inputRefs.current[index + 1].focus();
+    }
   };
 
-  const submitHandler = async() =>{
+  const submitHandler = async () => {
+    setLoading(true);
     try {
-      const verificationCode = code.join(''); // Join the array into a single string
-      await axi.post('/auth/verify-code', { email, code: verificationCode });
-      navigation.navigate('auth/mainAuth/signin')
+      const verificationCode = code.join("");
+      await axi.post("/auth/verify-code", { email, code: verificationCode });
+      navigation.navigate("auth/mainAuth/signin");
     } catch (error) {
-      // console.log(error.response.data.message);
-      alert(error.response.data.message || 'An error occurred. Please try again.')
+      Alert.alert(
+        error.response.data.message || "An error occurred. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
-  }
-  const resendVerificationCode = async() => {
+  };
+
+  const resendVerificationCode = async () => {
+    setLoading(true);
     try {
-      await axi.get(`/auth/resend-email-verification-code`, {email: email});
-      Alert.prompt('Code has been resent, check your email')
+      await axi.get(`/auth/resend-email-verification-code`, { email: email });
+      Alert.alert("Code has been resent, check your email");
     } catch (error) {
-      // console.log(error.response.data.message);
-      alert(error.response.data.message || 'An error occurred. Please try again.')
+      Alert.alert(
+        error.response.data.message || "An error occurred. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        <Ionicons name="arrow-back" size={24} color="black" style={styles.backIcon} />
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color="black"
+          style={styles.backIcon}
+        />
         <Text style={styles.headerTitle}>Enter the confirmation code</Text>
         <Text style={styles.headerSubtitle}>
-          To verify your email, enter the 6-digit code we sent to example@pitci.com
+          To verify your email, enter the 6-digit code we sent to {email}
         </Text>
 
         {/* Code Input */}
@@ -56,27 +85,40 @@ const ConfirmationCode = () => {
           {code.map((digit, index) => (
             <TextInput
               key={index}
-              style={[styles.codeInput, index === 3 && styles.codeInputMargin]}
+              style={[
+                styles.codeInput,
+                index === 3 && styles.codeInputMargin,
+              ]}
               maxLength={1}
               keyboardType="numeric"
               onChangeText={(text) => handleChange(text, index)}
               value={digit}
+              ref={(ref) => (inputRefs.current[index] = ref)}
             />
           ))}
         </View>
 
-        <Text style={styles.resendText} onPress={resendVerificationCode}>I didn't get the code</Text>
+        <Text style={styles.resendText} onPress={resendVerificationCode}>
+          I didn't get the code
+        </Text>
 
         {/* Verify Button */}
         <TouchableOpacity
           style={styles.verifyButton}
-          onPress={() => {
-            /* Verify action */
-            submitHandler()
-          }}
+          onPress={submitHandler}
+          disabled={loading} // Disable the button when loading
         >
-          <Text style={styles.verifyButtonText}>Verify and Create account</Text>
+          <Text style={styles.verifyButtonText}>
+            Verify and Create account
+          </Text>
         </TouchableOpacity>
+
+        {/* Loader */}
+        {loading && (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#196100" />
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -151,5 +193,16 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  loaderContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Semi-transparent background
+    zIndex: 1000, // Ensure the loader is on top
   },
 });

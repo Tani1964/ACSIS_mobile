@@ -89,14 +89,13 @@ const Signup = () => {
               <Text style={{color: "white"}}>Sign Up</Text>
             )}
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.googleButton}
-            onPress={() => {
-              /* Google Signup action */
-            }}
-          >
-            <Text style={styles.googleButtonText}>Sign up with Google</Text>
-          </TouchableOpacity>
+          {/* <TouchableOpacity */}
+            {/* // style={styles.googleButton} */}
+            {/* // onPress={() => { */}
+            {/* // }} */}
+          {/* // > */}
+            {/* // <Text style={styles.googleButtonText}>Sign up with Google</Text> */}
+          {/* // </TouchableOpacity> */}
         </View>
 
         {/* Links */}

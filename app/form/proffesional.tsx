@@ -19,6 +19,7 @@ const Proffessional = () => {
   const route = useRoute();
   
   const { id } = route.params || {}; // Default to an empty object to avoid destructuring undefined
+ 
   const { authState } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -53,8 +54,9 @@ const Proffessional = () => {
   };
 
   const submitHandler = async () => {
+    console.log(id)
     setLoading(true);
-    const headers = { Authorization: `Bearer ${authState.token}` };
+    const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
     try {
       console.log(route);
       
@@ -69,10 +71,22 @@ const Proffessional = () => {
       Alert.alert("Success", "Your professional information has been saved.");
       navigation.navigate("form/competition", {id:id});
     } catch (error) {
-      Alert.alert(
-        "Error",
-        "There was an error saving your information. Please try again."
-      );
+      if (error.response) {
+        const statusCode = error.response.status;
+        if (statusCode === 400) {
+          Alert.alert("Update Error", "Try again later.");
+        } else if (statusCode === 401) {
+          navigation.navigate("auth/mainAuth/signin");
+        } else if (statusCode === 422) {
+          Alert.alert("Update failed", "Make sure to input the right entries.");
+        } else if (statusCode === 404) {
+          Alert.alert("Pitch not found");
+        } else {
+          Alert.alert("Update Error", "Try again later.");
+        }
+      } else {
+        Alert.alert("Update failed", "Network error. Please check your internet connection.");
+      }
       console.log(error);
     } finally {
       setLoading(false);
@@ -104,6 +118,10 @@ const Proffessional = () => {
                 Competition Questions{" "}
                 <AntDesign name="right" size={15} color="black" />
               </Text>
+              <Text style={styles.headerText}>
+              Technical Questions{" "}
+              <AntDesign name="right" size={13} color="black" />
+            </Text>
             </View>
           </ScrollView>
           {/* Questions */}
@@ -199,7 +217,7 @@ const styles = StyleSheet.create({
     color: "#196100",
   },
   actionButtonContainer: {
-    padding: 20,
+    padding: 15,
     backgroundColor: "white",
   },
   inputContainer: {
@@ -223,7 +241,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: "#196100",
-    borderRadius: 10,
+    borderRadius: 100,
     paddingVertical: 15,
     alignItems: "center",
   },

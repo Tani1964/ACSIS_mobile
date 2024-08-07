@@ -1,5 +1,5 @@
-import { Button, StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
-import React, { useState,useLayoutEffect } from "react";
+import { Button, StyleSheet, Text, View, Image, TouchableOpacity, ActivityIndicator } from "react-native";
+import React, { useState, useLayoutEffect } from "react";
 import { Link } from "expo-router";
 import { useNavigation } from '@react-navigation/native';
 import { axi, useAuth } from "../../context/AuthContext";
@@ -7,12 +7,25 @@ import { axi, useAuth } from "../../context/AuthContext";
 const Pitch = () => {
   const navigation = useNavigation();
   const { authState } = useAuth();
+  const [loading, setLoading] = useState(true);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: "",
     });
+    // Simulate loading
+    setTimeout(() => {
+      setLoading(false);
+    }, 2000); // Adjust the timeout as necessary
   }, [navigation]);
-  
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#196100" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.body}>
@@ -32,16 +45,19 @@ const Pitch = () => {
         </View>
       </View>
       <View>
-        
-      {authState.authenticated?<Link href="/form/index" asChild>
-        <TouchableOpacity style={styles.link}>
-          <Text style={styles.linkText}>Pitch an idea</Text>
-        </TouchableOpacity>
-      </Link>:<Link href="/auth/onboarding/one" asChild>
-        <TouchableOpacity style={styles.link}>
-          <Text style={styles.linkText}>Pitch an idea</Text>
-        </TouchableOpacity>
-      </Link>}
+        {authState.authenticated ? (
+          <Link href="/form/index" asChild>
+            <TouchableOpacity style={styles.link}>
+              <Text style={styles.linkText}>Pitch an idea</Text>
+            </TouchableOpacity>
+          </Link>
+        ) : (
+          <Link href="/auth/onboarding/one" asChild>
+            <TouchableOpacity style={styles.link}>
+              <Text style={styles.linkText}>Pitch an idea</Text>
+            </TouchableOpacity>
+          </Link>
+        )}
       </View>
     </View>
   );
@@ -50,6 +66,12 @@ const Pitch = () => {
 export default Pitch;
 
 const styles = StyleSheet.create({
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
   body: {
     flex: 1,
     alignItems: "center",
@@ -79,19 +101,19 @@ const styles = StyleSheet.create({
   },
   link: {
     marginBottom: 80,
-      paddingVertical: 10,
-      paddingHorizontal: 100,
-      borderRadius: 50,
-      color: "white",
-      backgroundColor: "#196100",
-      shadowColor: "black",
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 100,
+    borderRadius: 50,
+    color: "white",
+    backgroundColor: "#196100",
+    shadowColor: "black",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   linkText: {
     color: "white",

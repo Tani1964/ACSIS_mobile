@@ -8,25 +8,24 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Button
 } from "react-native";
-import React, { useState, useLayoutEffect, useEffect } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
 import { useAuth } from "@/app/context/AuthContext";
-import { GoogleSignin, statusCodes } from "@react-native-google-signin/google-signin";
 import * as SecureStore from "expo-secure-store";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const signin = () => {
+const Signin = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-  const { authState, setAuthState } = useAuth();
+  const { setAuthState } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -34,68 +33,44 @@ const signin = () => {
     });
   }, [navigation]);
 
-  // useEffect(() => {
-  //   configureGoogleSignIn();
-  // }, []);
-
-  // const configureGoogleSignIn = () => {
-  //   GoogleSignin.configure({
-  //     webClientId: '1077796380960-nvmijg1o0975tfq11j5tpiejjm6bfvqr.apps.googleusercontent.com',
-  //     androidClientId:"1077796380960-p35pbur9rtjmjnuo4209r108d50ilesu.apps.googleusercontent.com",
-  //     iosClientId:"1077796380960-mv6j98d90g6gjfpjrt41folnoqrk2ppt.apps.googleusercontent.com",
-  //     // offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
-  //   });
-  // };
-
   const submitHandler = async () => {
     setLoading(true);
     try {
+      console.log(formData);
       const response = await axi.post("/auth/login", formData);
-      await SecureStore.setItemAsync("token", response.data.token);
-      const token = await SecureStore.getItemAsync("token")
-      await setAuthState({
-        token: token ,
+      await SecureStore.setItemAsync("authToken", response.data.token); // Ensure consistent key
+      const token = await SecureStore.getItemAsync("authToken"); // Ensure consistent key
+      setAuthState({
+        token: token,
         authenticated: true,
       });
       navigation.navigate("index");
-      console.log("ghhhh")
-      console.log(token)
+      ("Token stored and state set:", token);
     } catch (error) {
-      Alert.alert("Login Failed", "Please check your email and password.");
-      console.log(error);
+      if (error.response) {
+        const statusCode = error.response.status;
+        if (statusCode === 400 || statusCode === 422) {
+          Alert.alert("Login Failed", "Invalid email or password.");
+        } else if (statusCode === 401) {
+          Alert.alert(
+            "Login Failed",
+            "Unauthorized access. Please check your credentials."
+          );
+        } else if (statusCode === 403) {
+          Alert.alert("Login Failed", "Access forbidden. Please contact support.");
+        } else if (statusCode === 404) {
+          Alert.alert("Login Failed", "User not found.");
+        } else {
+          Alert.alert("Login Failed", "An unexpected error occurred. Please try again.");
+        }
+      } else {
+        Alert.alert("Login Failed", "Network error. Please check your internet connection.");
+      }
+      console.log("Login error:", error);
     } finally {
       setLoading(false);
     }
   };
-
-  // const googleSignIn = async () => {
-  //   setLoading(true);
-  //   try {
-  //     await GoogleSignin.hasPlayServices();
-  //     const userInfo = await GoogleSignin.signIn();
-  //     const response = await axi.post("/auth/google-login", {
-  //       idToken: userInfo.idToken,
-  //     });
-  //     await setAuthState({
-  //       token: response.data.token,
-  //       authenticated: true,
-  //     });
-  //     navigation.navigate("form/index");
-  //   } catch (error) {
-  //     if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-  //       Alert.alert("Login Cancelled", "Google Sign-In was cancelled.");
-  //     } else if (error.code === statusCodes.IN_PROGRESS) {
-  //       Alert.alert("Login In Progress", "Google Sign-In is in progress.");
-  //     } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-  //       Alert.alert("Play Services Error", "Play services not available or outdated.");
-  //     } else {
-  //       Alert.alert("Login Failed", "An error occurred during Google Sign-In.");
-  //     }
-  //     console.log(error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -136,7 +111,9 @@ const signin = () => {
             />
           </View>
           <TouchableOpacity
-            onPress={() => navigation.navigate("auth/forgotPassword/forgotPassword")}
+            onPress={() =>
+              navigation.navigate("auth/forgotPassword/forgotPassword")
+            }
           >
             <Text style={styles.forgotPassword}>Forgot your password?</Text>
           </TouchableOpacity>
@@ -154,23 +131,6 @@ const signin = () => {
               <Text style={styles.signinButtonText}>Sign in</Text>
             )}
           </TouchableOpacity>
-          {/* <TouchableOpacity
-            style={styles.googleButton}
-            onPress={googleSignIn}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="black" />
-            ) : (
-              <>
-                <Image
-                  source={require("../../../assets/images/google-logo.png")}
-                  style={styles.googleLogo}
-                />
-                <Text style={styles.googleButtonText}>Sign in with Google</Text>
-              </>
-            )}
-          </TouchableOpacity> */}
         </View>
 
         <View style={styles.footerContainer}>
@@ -186,7 +146,7 @@ const signin = () => {
   );
 };
 
-export default signin;
+export default Signin;
 
 const styles = StyleSheet.create({
   scrollContainer: {
@@ -202,10 +162,6 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginBottom: 30,
-  },
-  headerImage: {
-    resizeMode: "contain",
-    marginBottom: 20,
   },
   headerTitle: {
     fontSize: 24,
@@ -256,27 +212,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
-  },
-  googleButton: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 15,
-    borderRadius: 25,
-    borderColor: "lightgrey",
-    borderWidth: 1,
-  },
-  googleLogo: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
-  },
-  googleButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#196100",
   },
   footerContainer: {
     marginTop: 20,

@@ -1,12 +1,20 @@
 import { StyleSheet, Text, View, ActivityIndicator } from "react-native";
-import React from "react";
+import React, {useLayoutEffect} from "react";
 import { WebView } from "react-native-webview";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 
 const linkWeb = () => {
+  const navigation = useNavigation()
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: "",
+    });
+  }, [navigation]);
+
   const route = useRoute();
   const { link } = route.params;
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>

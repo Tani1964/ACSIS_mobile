@@ -1,17 +1,20 @@
-import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { Link } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
-  ActivityIndicator, Alert,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
+  TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
+import { AntDesign } from "@expo/vector-icons";
+import { Link } from "expo-router";
+import React, { useState, useLayoutEffect, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { axi, useAuth } from "../../context/AuthContext";
+import { useRoute } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const TechnicalReview = () => {
   const navigation = useNavigation();
@@ -48,7 +51,7 @@ const TechnicalReview = () => {
           return;
         }
 
-        const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
+        const headers = { Authorization: `Bearer ${token}` };
         const response = await axi.get(`/pitch/get-pitch/${id}`, { headers });
         setData(response.data.pitch.technical_agreement); // Uncommented this line
         console.log("hhhh", response.data.pitch.technical_agreement);
@@ -61,25 +64,28 @@ const TechnicalReview = () => {
   }, [authState, id, navigation]);
 
   const submitHandler = async () => {
-    console.log(id)
-    setLoading(true);
+    if (!id) {
+      console.error("ID is undefined");
+      return;
+    }
+
     try {
-      console.log(route);
-      console.log(authState.token);
-      const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
-      
-      console.log(`/pitch/submit-pitch/${id}`, { headers})
-      const response = await axi.post(`/pitch/submit-pitch/${id}`, {}, {
-        headers,
-      });
-      Alert.alert("Success", "Your application has been submitted.");
+      setLoading(true);
+      const token = await SecureStore.getItemAsync("token");
+      if (!token) {
+        navigation.navigate("auth/mainAuth/signin");
+        return;
+      }
+
+      const headers = { Authorization: `Bearer ${token}` };
+      console.log(headers);
+      console.log(id);
+      await axi.post(`/pitch/submit-pitch/${id}`, {});
+      await console.log(`/pitch/submit-pitch/${id}`, { headers });
       navigation.navigate("form/review/submittion");
     } catch (error) {
-      Alert.alert(
-        "Error",
-        "There was an error saving your information. Please try again."
-      );
-      console.log(error);
+      console.error(error);
+      console.log(error.message);
     } finally {
       setLoading(false);
     }
@@ -100,7 +106,7 @@ const TechnicalReview = () => {
               Does your company have any current investors?
             </Text>
             <View style={styles.editButton}>
-              <Link href="/form/technical">
+              <Link href="/updateform/technical">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -114,7 +120,7 @@ const TechnicalReview = () => {
               Does your company currently employ people?
             </Text>
             <View style={styles.editButton}>
-              <Link href="/form/technical">
+              <Link href="/updateform/technical">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
@@ -129,7 +135,7 @@ const TechnicalReview = () => {
               aware of?
             </Text>
             <View style={styles.editButton}>
-              <Link href="/form/technical">
+              <Link href="/updateform/technical">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>

@@ -8,6 +8,7 @@ import { axi, useAuth } from "../../context/AuthContext";
 import { useLocalSearchParams } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 const competitionReview = () => {
@@ -37,7 +38,7 @@ const competitionReview = () => {
       }
     };
     const getData = async () => {
-      const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
+      const headers = { Authorization: `Bearer ${authState.token}` };
       const response = await axi.get(`/pitch/get-pitch/${id}`, {
         headers,
       });
@@ -56,17 +57,18 @@ const competitionReview = () => {
         </TouchableOpacity>
       <Text style={styles.header}>Competition Questions</Text>
       </View>
+      <ScrollView>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>
               Please provide a brief description of your business
             </Text>
-            <View style={styles.editButton}>
-              <Link href="/form/competition">
+            {/* <View style={styles.editButton}>
+              <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View>
+            </View> */}
           </View>
           <Text style={styles.infoValue}>{data.business_description}</Text>
         </View>
@@ -75,12 +77,12 @@ const competitionReview = () => {
             <Text style={styles.infoLabel}>
               Why are you interested in this competition?
             </Text>
-            <View style={styles.editButton}>
-              <Link href="/form/competition">
+            {/* <View style={styles.editButton}>
+              <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View>
+            </View> */}
           </View>
           <Text style={styles.infoValue}>{data.reason_of_interest}</Text>
         </View>
@@ -89,12 +91,12 @@ const competitionReview = () => {
             <Text style={styles.infoLabel}>
               How do you plan to use the investment prize if you win?
             </Text>
-            <View style={styles.editButton}>
-              <Link href="/form/competition">
+            {/* <View style={styles.editButton}>
+              <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View>
+            </View> */}
           </View>
           <Text style={styles.infoValue}>{data.investment_prize_usage_plan}</Text>
         </View>
@@ -104,12 +106,12 @@ const competitionReview = () => {
               What impact do you hope to achieve with investment into your
               vision?
             </Text>
-            <View style={styles.editButton}>
-              <Link href="/form/competition">
+            {/* <View style={styles.editButton}>
+              <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View>
+            </View> */}
           </View>
           <Text style={styles.infoValue}>{data.impact_plan_with_investment_prize}</Text>
         </View>
@@ -119,21 +121,22 @@ const competitionReview = () => {
               Please provide a short summary of why you should be given the
               opportunity to be on PITCH IT TO CLINCH IT
             </Text>
-            <View style={styles.editButton}>
-              <Link href="/form/competition">
+            {/* <View style={styles.editButton}>
+              <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View>
+            </View> */}
           </View>
           <Text style={styles.infoValue}>{data.summary_of_why_you_should_participate}</Text>
         </View>
+      </ScrollView>
       <View style={styles.actionButtonContainer}>
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() =>(
             console.log(id),
-            navigation.navigate("form/review/technicalReview", { id: id })
+            navigation.navigate("updateform/review/technicalReview", { id: id })
             )
           }
           disabled={loading}
@@ -153,7 +156,6 @@ export default competitionReview;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: "white",
     paddingHorizontal: 30,
   },
@@ -161,10 +163,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginTop: 20,
+    marginBottom: 10,
   },
   infoItem: {
     borderBottomColor: "lightgrey",
     borderBottomWidth: 1,
+    paddingVertical: 20,
   },
   infoHeader: {
     flexDirection: "row",

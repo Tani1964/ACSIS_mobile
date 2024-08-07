@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ForgotPassword = () => {
   const navigation = useNavigation();
@@ -48,6 +49,7 @@ const ForgotPassword = () => {
   };
 
   return (
+    <SafeAreaView>
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <Ionicons
@@ -90,6 +92,7 @@ const ForgotPassword = () => {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 };
 

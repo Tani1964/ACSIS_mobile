@@ -23,6 +23,7 @@ const TabBar = ({ state, descriptors, navigation }) => {
         "(pitch)/index": (props) => <Ionicons name="bulb" size={24} color={props.color} {...props} />,
         "(pitch)/pitchList": (props) => <Ionicons name="bulb" size={24} color={props.color} {...props} />,
         business: (props) => <Ionicons name="business-sharp" size={24} color={props.color} {...props} />,
+        votes: (props) => <MaterialIcons name="how-to-vote" size={24} color={props.color} {...props} />,
     };
 
     const primaryColor = "#196100";
@@ -42,7 +43,7 @@ const TabBar = ({ state, descriptors, navigation }) => {
                 console.log("fff",authState.authenticated == true )
                 const pitchState = authState.authenticated  ? "(pitch)/pitchList" : "(pitch)/index";
 
-                if (!['index', 'events', "business", pitchState].includes(route.name)) return null;
+                if (!['index', 'events', "business", pitchState, "votes"].includes(route.name)) return null;
 
                 const isFocused = state.index === index;
 

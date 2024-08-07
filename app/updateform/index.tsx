@@ -3,15 +3,18 @@ import {
   Text,
   View,
   FlatList,
+  ScrollView,
   ActivityIndicator,
+  Button,
   TouchableOpacity
 } from "react-native";
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import { Link } from "expo-router";
+import ActionButton from "../../components/actionButton";
 import { Entypo } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
-import { SafeAreaView } from "react-native-safe-area-context";
+import * as SecureStore from "expo-secure-store";
 
 const DATA = [
   {
@@ -67,7 +70,7 @@ const TipItem = ({ item }) => (
 
 const Index = () => {
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const { authState } = useAuth();
 
   useLayoutEffect(() => {
@@ -84,25 +87,15 @@ const Index = () => {
           navigation.navigate("auth/mainAuth/signin");
         }
         console.log("Authentication status successfully.");
-        setLoading(false); // Set loading to false once authentication is done
       } catch (error) {
         console.error(error);
-        setLoading(false); // Set loading to false even if there's an error
       }
     };
     checkAuth();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#196100" />
-      </View>
-    );
-  }
-
+  
   return (
-    <SafeAreaView>
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
@@ -128,21 +121,11 @@ const Index = () => {
           />
         </View>
       </View>
-      <View style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 4 }}>
-        {/* <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate("/events")}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.actionButtonText}>Go back home</Text>
-          )}
-        </TouchableOpacity> */}
+      <View style={{display:"flex", flexDirection:"column",gap:10, paddingTop:4}}>
+      
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => navigation.navigate("form/personal")}
+          onPress={()=> navigation.navigate("form/personal")}
           disabled={loading}
         >
           {loading ? (
@@ -152,19 +135,13 @@ const Index = () => {
           )}
         </TouchableOpacity>
       </View>
-    </View></SafeAreaView>
+    </View>
   );
 };
 
 export default Index;
 
 const styles = StyleSheet.create({
-  loaderContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-  },
   container: {
     paddingHorizontal: 20,
     paddingVertical: 40,
@@ -223,8 +200,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     flexDirection: "row",
     alignItems: "center",
-  },
-  actionButton: {
+  },actionButton: {
     backgroundColor: "#196100",
     borderRadius: 100,
     paddingVertical: 15,

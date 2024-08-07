@@ -13,25 +13,26 @@ import { Link } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
 import { useRoute } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const CreateNew = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const {email} = route.params
+  const { email } = route.params;
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, [navigation]);
-  
+
   const [formData, setFormData] = useState({
     newPassword: "",
     confirmPassword: "",
     verificationCode: "",
   });
 
-  const submit = async() => {
+  const submit = async () => {
     if (formData.newPassword !== formData.confirmPassword) {
       Alert.alert("Error", "Passwords do not match");
       return;
@@ -39,80 +40,92 @@ const CreateNew = () => {
 
     try {
       // console.log(email)
-      const response = await axi.patch(`/user/password/update-user-password`, {email:email, newPassword: formData.newPassword, verificationCode: formData.verificationCode});
+      const response = await axi.patch(`/user/password/update-user-password`, {
+        email: email,
+        newPassword: formData.newPassword,
+        verificationCode: formData.verificationCode,
+      });
       console.log(response);
       navigation.navigate("auth/forgotPassword/success");
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <Ionicons
-          name="arrow-back"
-          size={24}
-          color="black"
-          style={styles.backIcon}
-          onPress={() => navigation.goBack()}
-        />
-        <Text style={styles.headerTitle}>Create a new password</Text>
-        <Text style={styles.headerSubtitle}>
-          Create a new password. You’ll need this password to log into your
-          account.
-        </Text>
-
-        {/* New Password Input */}
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={24} color="lightgrey" />
-          <TextInput
-            style={styles.inputField}
-            placeholder="New password"
-            onChangeText={(newText) =>
-              setFormData((prevState) => ({ ...prevState, newPassword: newText }))
-            }
-            defaultValue={formData.newPassword}
-            secureTextEntry={true}
+    <SafeAreaView>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.container}>
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color="black"
+            style={styles.backIcon}
+            onPress={() => navigation.goBack()}
           />
-        </View>
+          <Text style={styles.headerTitle}>Create a new password</Text>
+          <Text style={styles.headerSubtitle}>
+            Create a new password. You’ll need this password to log into your
+            account.
+          </Text>
 
-        {/* Confirm Password Input */}
-        <View style={styles.inputContainer}>
-          <Ionicons name="lock-closed-outline" size={24} color="lightgrey" />
-          <TextInput
-            style={styles.inputField}
-            placeholder="Confirm new password"
-            onChangeText={(newText) =>
-              setFormData((prevState) => ({ ...prevState, confirmPassword: newText }))
-            }
-            defaultValue={formData.confirmPassword}
-            secureTextEntry={true}
-          />
-        </View>
+          {/* New Password Input */}
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={24} color="lightgrey" />
+            <TextInput
+              style={styles.inputField}
+              placeholder="New password"
+              onChangeText={(newText) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  newPassword: newText,
+                }))
+              }
+              defaultValue={formData.newPassword}
+              secureTextEntry={true}
+            />
+          </View>
 
-        {/* Verification Code Input */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.inputField}
-            placeholder="Verification Code"
-            onChangeText={(newText) =>
-              setFormData((prevState) => ({ ...prevState, verificationCode: newText }))
-            }
-            defaultValue={formData.verificationCode}
-            secureTextEntry={true}
-          />
-        </View>
+          {/* Confirm Password Input */}
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={24} color="lightgrey" />
+            <TextInput
+              style={styles.inputField}
+              placeholder="Confirm new password"
+              onChangeText={(newText) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  confirmPassword: newText,
+                }))
+              }
+              defaultValue={formData.confirmPassword}
+              secureTextEntry={true}
+            />
+          </View>
 
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={styles.verifyButton}
-          onPress={submit}
-        >
-          <Text style={styles.verifyButtonText}>Create new password</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          {/* Verification Code Input */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.inputField}
+              placeholder="Verification Code"
+              onChangeText={(newText) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  verificationCode: newText,
+                }))
+              }
+              defaultValue={formData.verificationCode}
+              secureTextEntry={true}
+            />
+          </View>
+
+          {/* Submit Button */}
+          <TouchableOpacity style={styles.verifyButton} onPress={submit}>
+            <Text style={styles.verifyButtonText}>Create new password</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

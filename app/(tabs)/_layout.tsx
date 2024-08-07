@@ -21,7 +21,8 @@ const Layout = () => {
       <Tabs.Screen name="events" options={{ title: 'Events' }} />
       <Tabs.Screen name="(pitch)/index" options={{ title: 'Pitch' }} />
       <Tabs.Screen name="(pitch)/pitchList" options={{ title: 'Pitch' }} />
-      <Tabs.Screen name="business" options={{ title: 'Businesses' }} />
+      <Tabs.Screen name="business" options={{ title: 'B2B' }} />
+      <Tabs.Screen name="votes" options={{ title: 'Votes' }} />
     </Tabs>
     </SafeAreaView>
   );

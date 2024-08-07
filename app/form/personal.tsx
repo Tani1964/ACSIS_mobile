@@ -51,6 +51,7 @@ const Personal = () => {
     const day = `0${date.getDate()}`.slice(-2);
     return `${year}-${month}-${day}`;
   };
+  
   const [id, setId] = useState("");
   const [date, setDate] = useState(new Date());
   const [formData, setFormData] = useState({
@@ -60,6 +61,7 @@ const Personal = () => {
     dateOfBirth: formatDate(date),
     nationality: "",
     ethnicity: "",
+    gender: "",  // Added gender field
     requiresDisabilitySupport: false,
     disabilitySupportDescription: "",
   });
@@ -76,6 +78,12 @@ const Personal = () => {
     { label: "No", state: false },
   ];
 
+  const genderOptions = [
+    { label: "Male", value: "Male" },
+    { label: "Female", value: "Female" },
+    { label: "Other", value: "Other" },
+  ];
+
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
     setShowPicker(Platform.OS === "ios");
@@ -89,13 +97,14 @@ const Personal = () => {
   const submitHandler = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${authState.token}` };
+      const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
       console.log(formData);
       console.log(headers);
       const response = await axi.post("/pitch/initiate-pitch", formData, {
         headers
       });
       const pitchId = response.data.pitch.id
+      console.log(pitchId)
       Alert.alert("Success", "Your personal information has been saved.");
 
       // const result = axi.get("/pitch/get-pitch", { headers }).then((res) => {
@@ -115,10 +124,22 @@ const Personal = () => {
 
       navigation.navigate("form/proffesional", { id: pitchId });
     } catch (error) {
-      Alert.alert(
-        "Error",
-        "There was an error saving your information. Please try again."
-      );
+      if (error.response) {
+        const statusCode = error.response.status;
+        if (statusCode === 400) {
+          Alert.alert("Update Error", "Try again later.");
+        } else if (statusCode === 401) {
+          navigation.navigate("auth/mainAuth/signin");
+        } else if (statusCode === 422) {
+          Alert.alert("Update failed", "Make sure to input the right entries.");
+        } else if (statusCode === 404) {
+          Alert.alert("Pitch not found");
+        } else {
+          Alert.alert("Update Error", "Try again later.");
+        }
+      } else {
+        Alert.alert("Update failed", "Network error. Please check your internet connection.");
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -159,6 +180,10 @@ const Personal = () => {
                 Competition Questions{" "}
                 <AntDesign name="right" size={15} color="black" />
               </Text>
+              <Text style={styles.pageLinkText}>
+              Technical Questions{" "}
+              <AntDesign name="right" size={13} color="black" />
+            </Text>
             </View>
           </ScrollView>
           <View style={styles.form}>
@@ -191,7 +216,7 @@ const Personal = () => {
               <AntDesign name="phone" size={24} color="lightgrey" />
               <TextInput
                 style={styles.inputField}
-                placeholder="Phone number with country code"
+                placeholder="Mobile number with country code"
                 value={formData.phoneNumber}
                 onChangeText={(newText) =>
                   setFormData((prevState) => ({
@@ -207,6 +232,7 @@ const Personal = () => {
                 style={{ flexDirection: "row", alignItems: "center" }}
               >
                 <AntDesign name="calendar" size={24} color="lightgrey" />
+                
                 <TextInput
                   style={styles.inputField}
                   placeholder="Date of Birth"
@@ -214,6 +240,7 @@ const Personal = () => {
                   editable={false}
                   pointerEvents="none"
                 />
+                <Text style={{color:"grey"}}>D.O.B</Text>
               </Pressable>
               {showPicker && (
                 <DateTimePicker
@@ -272,6 +299,20 @@ const Personal = () => {
                 }
               />
             </View>
+            <Text style={{ fontWeight: "bold" }}>
+              Gender
+            </Text>
+            <RadioButtonRN
+              data={genderOptions}
+              box={false}
+              selectedBtn={(e) =>
+                setFormData((prevState) => ({
+                  ...prevState,
+                  gender: e.value,
+                }))
+              }
+              icon={<AntDesign name="rocket1" size={25} color="#196100" />}
+            />
             <Text style={{ fontWeight: "bold" }}>
               Do you require any disability support?
             </Text>
@@ -385,7 +426,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: "#196100",
-    borderRadius: 15,
+    borderRadius: 100,
     paddingVertical: 15,
     alignItems: "center",
   },

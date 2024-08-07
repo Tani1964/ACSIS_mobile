@@ -27,6 +27,8 @@
       "bundleIdentifier": "com.tani1964.ACSIS"
     },
     "android": {
+      "package":"acsis.mobile",
+      "versionCode": 1,
       "packages": "com.acsis.googleauthexporeactnative",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",

@@ -7,9 +7,8 @@ import { useAuth } from '../context/AuthContext';
 const viewBusiness = async() => {
   const route = useRoute();
   const { id } = route.params;
-  const {authState} = useAuth
+  const {authState} = useAuth()
   const auth = await authState
-  console.log(auth)
   return (
     <View>
       

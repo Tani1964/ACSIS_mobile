@@ -1,28 +1,45 @@
 import { StyleSheet, Text, View, Image } from 'react-native'
-import React, { useState,useLayoutEffect } from "react";
+import React, { useState,useLayoutEffect, useEffect } from "react";
 import ActionButton from '@/components/actionButton'
 import { useNavigation } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { axi, useAuth } from "../../context/AuthContext";
 
 const SubmittedScreen = () => {
   const navigation = useNavigation();
+  const { authState } = useAuth();
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, [navigation]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
+        }
+        console.log("Authentication status successfully.");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkAuth();
+  }, []);
+
   return (
-    <SafeAreaView>
+    
     <View style={styles.container}>
       <View style={styles.contentContainer}>
         <Image source={require('../../../assets/images/successful.png')} style={styles.image} />
-        <Text style={styles.title}>Your new password has been created</Text>
+        <Text style={styles.title}>Application Submitted Successfully!</Text>
         <Text style={styles.description}>
-        You have successfully created a new password. You can proceed to sign into your account
+          We appreciate the time you took to complete your application. Our team will carefully review your submission and be in touch soon.
         </Text>
       </View>
-      <ActionButton text="Proceed to sign in" link="/" style={styles.button} />
-    </View></SafeAreaView>
+      <ActionButton text="Got it" link="/" style={styles.button} />
+    </View>
   )
 }
 

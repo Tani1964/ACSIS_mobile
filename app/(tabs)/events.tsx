@@ -7,108 +7,181 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
+  TextInput,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { axi } from "@/app/context/AuthContext";
-import { useAuth } from "@/app/context/AuthContext";
+import { axi } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import MapPreview from "../../assets/images/mapPreview.jpg";
-import * as SecureStore from "expo-secure-store";
+import Header from '../../components/header';
 
 const formatDateTime = (dateTimeString) => {
   const date = new Date(dateTimeString);
   const dateOptions = { weekday: "long", month: "short", day: "numeric" };
   const timeOptions = { hour: "2-digit", minute: "2-digit" };
-  return `${date.toLocaleDateString(
-    "en-US",
-    dateOptions
-  )}, ${date.toLocaleTimeString("en-US", timeOptions)}`;
+  return `${date.toLocaleDateString("en-US",dateOptions)}, ${date.toLocaleTimeString("en-US", timeOptions)}`;
 };
 
 const Events = () => {
   const navigation = useNavigation();
   const [events, setEvents] = useState([]);
-  const { authState, setAuthState } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const { authState } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+  const [filterDate, setFilterDate] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const fetchData = async () => {
+    try {
+      const response = await axi.get("/event/get-all-events");
+      setEvents(response.data); 
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      if (error.response) {
+        const statusCode = error.response.status;
+        if (statusCode === 400) {
+          Alert.alert("Error", "Bad request. Please try again later.");
+        } else if (statusCode === 401) {
+          console.log("Error", "Unauthorized access. Please log in again.");
+          navigation.navigate("auth/mainAuth/signin");
+        } else if (statusCode === 403) {
+          Alert.alert("Error", "Forbidden access. You do not have permission to access this resource.");
+        } else if (statusCode === 404) {
+          Alert.alert("Error", "Events not found.");
+        } else if (statusCode === 500) {
+          console.log("Error", "Internal server error. Please try again later.");
+        } else {
+          Alert.alert("Error", "An unexpected error occurred. Please try again later.");
+        }
+      } else {
+        Alert.alert("Error", "Network error. Please check your internet connection.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axi.get("/user/get-all-events");
-        setEvents(response.data); // Assuming response.data is an array of events
-        console.log(response.data);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-      }
-    };
-
     fetchData();
   }, []);
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData().then(() => {
+      setRefreshing(false); // Stop refreshing after data is fetched
+    });
+  };
+
+  const filterEventsByDate = (events, filterDate) => {
+    if (!filterDate) return events;
+    const filterDateObj = new Date(filterDate);
+    return events.filter(event => new Date(event.date_time) >= filterDateObj);
+  };
+
+  const filterEventsBySearchQuery = (events, searchQuery) => {
+    if (!searchQuery) return events;
+    return events.filter(event =>
+      event.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  const sortEventsByDate = (events) => {
+    return events.sort((a, b) => new Date(a.date_time) - new Date(b.date_time));
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Header />
+        <ActivityIndicator size="large" color="#196100" />
+      </View>
+    );
+  }
+
+  if (!events.length) {
+    return (
+      <View style={styles.container}>
+        <Header />
+        <Text style={styles.emptyText}>No events found.</Text>
+      </View>
+    );
+  }
+
+  let filteredEvents = filterEventsByDate(events, filterDate);
+  filteredEvents = filterEventsBySearchQuery(filteredEvents, searchQuery);
+  filteredEvents = sortEventsByDate(filteredEvents);
+
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {events
-          ? events.map((event) => (
-              <View key={event.id} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.eventName}>
-                    {event.title || "Unnamed Event"}
-                  </Text>
-                  <Text style={styles.dateText}>
-                    {formatDateTime(event.date_time)}
-                  </Text>
-                </View>
-                <Text style={styles.timeText}>
-                  Expected duration: {event.duration_hours} hours
-                </Text>
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate("maps/fullView", {
-                      location: event.location,
-                      event: event,
-                    })
-                  }
-                >
-                  <Image source={MapPreview} style={styles.eventImage} />
-                </TouchableOpacity>
-                <View style={styles.venueContainer}>
-                  <View style={styles.venueDetails}>
-                    <Text style={styles.venueName}>{event.description}</Text>
-                    {/* <Text style={styles.venueInfo}>
-                  {event.venueDistance} • {event.venueRating} ★ (
-                  {event.reviewsCount} reviews)
-                </Text> */}
-                    <Text style={styles.location}>{event.location}</Text>
-                  </View>
-                </View>
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => (
-                      console.log(event.registrationLink),
-                      event.registrationLink?
-                      navigation.navigate("maps/linkWeb", {
-                        link: event.registrationLink,
-                      }): Alert.alert("No need to register")
-                    )}
-                  >
-                    <Text style={styles.buttonText}>Register</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={() =>
-                      navigation.navigate("maps/fullView", {
-                        location: event.location,
-                        event: event,
-                      })
-                    }
-                  >
-                    <Text style={styles.buttonText}>More Info</Text>
-                  </TouchableOpacity>
-                </View>
+    <View style={styles.container}
+    refreshControl={
+      <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+    }>
+      <Header />
+      <TextInput
+        style={styles.input}
+        placeholder="Search events"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      <ScrollView
+        style={styles.scrollView}
+        
+      >
+        {filteredEvents.map((event) => (
+          <View key={event.id} style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.eventName}>{event.title || "Unnamed Event"}</Text>
+              <Text> {event.day&& `Day ${event.day}`}</Text>
+            </View>
+              <Text style={styles.dateText}>{formatDateTime(event.date_time)}</Text>
+            <Text style={styles.timeText}>Expected duration: {event.duration_hours} hours</Text>
+            <TouchableOpacity
+              onPress={() =>
+                // navigation.navigate("maps/fullView", {
+                //   location: event.location,
+                //   event: event,
+                // })
+                console.log(event)
+              }
+            >
+              <Image source={event.image_ref} style={styles.eventImage} />
+            </TouchableOpacity>
+            <View style={styles.venueContainer}>
+              <View style={styles.venueDetails}>
+                <Text style={styles.venueName}>{event.description}</Text>
+                <Text style={styles.location}>{event.location}</Text>
               </View>
-            ))
-          : "Loading..."}
+            </View>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  if (event.registrationLink) {
+                    navigation.navigate("maps/linkWeb", {
+                      link: event.registrationLink,
+                    });
+                  } else {
+                    Alert.alert("Info", "No need to register.");
+                  }
+                }}
+              >
+                <Text style={styles.buttonText}>Register</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.buttonSec}
+                onPress={() =>
+                  navigation.navigate("maps/fullView", {
+                    eventID: event.id,
+                  })
+                }
+              >
+                <Text style={styles.buttonTextSec}>More Info</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
       </ScrollView>
     </View>
   );
@@ -120,11 +193,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f8f8",
-    paddingTop: 20,
+    // paddingTop: 20,
     paddingBottom: 90,
   },
   scrollView: {
     paddingHorizontal: 10,
+  },
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    marginBottom: 10,
+    marginHorizontal: 10,
+    paddingHorizontal: 8,
+    borderRadius: 4,
   },
   card: {
     backgroundColor: "white",
@@ -156,6 +238,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     marginBottom: 10,
+    color:"#999"
   },
   eventImage: {
     width: "100%",
@@ -175,10 +258,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  venueInfo: {
-    fontSize: 14,
-    color: "#666",
-  },
   location: {
     fontSize: 14,
     color: "#666",
@@ -197,5 +276,34 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  buttonSec: {
+    backgroundColor: "white",
+    borderColor: "#196100",
+    borderWidth: 2,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  buttonTextSec: {
+    color: "#196100",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f8f8",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f8f8",
+  },
+  emptyText: {
+    fontSize: 18,
+    color: "#666",
   },
 });

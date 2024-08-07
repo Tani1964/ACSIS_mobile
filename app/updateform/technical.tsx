@@ -15,11 +15,11 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import CheckBox from "react-native-check-box";
 import { axi } from "../context/AuthContext";
 import { useAuth } from "../context/AuthContext";
-import * as SecureStore from "expo-secure-store";
 
-const technical = () => {
+const Technical = () => {
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Form submission loading
+  const [dataLoading, setDataLoading] = useState(true); // Data fetching loading
   const { authState } = useAuth();
   const route = useRoute();
   const { id } = route.params;
@@ -29,21 +29,6 @@ const technical = () => {
       headerShown: false,
     });
   }, [navigation]);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const auth = await authState.authenticated;
-        if (!auth) {
-          navigation.navigate("auth/mainAuth/signin");
-        }
-        console.log("Authentication status successfully.");
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    checkAuth();
-  }, []);
 
   const [formData, setFormData] = useState({
     haveCurrentInvestors: false,
@@ -57,6 +42,60 @@ const technical = () => {
 
   const [isAgreementChecked, setIsAgreementChecked] = useState(false);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const auth = await authState.authenticated;
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const fetchData = async () => {
+      try {
+        const headers = { Authorization: `Bearer ${authState.token}` };
+        const response = await axi.get(`/pitch/get-pitch/${id}`, { headers });
+        const data = response.data.pitch.technical_agreement;
+        data && setFormData({
+          haveCurrentInvestors: data.haveCurrentInvestors,
+          haveCurrentInvestorsDescription: data.haveCurrentInvestorsDescription,
+          haveDebts: data.haveDebts,
+          debtsInfo: data.debtsInfo,
+          haveCurrentEmployees: data.haveCurrentEmployees,
+          haveCurrentEmployeesDescription: data.haveCurrentEmployeesDescription,
+          hasSignedTechnicalAgreement: data.hasSignedTechnicalAgreement,
+        });
+        setIsAgreementChecked(data.hasSignedTechnicalAgreement);
+      } catch (error) {
+        if (error.response) {
+          const statusCode = error.response.status;
+          if (statusCode === 400) {
+            Alert.alert("Update Error", "Try again later.");
+          } else if (statusCode === 401) {
+            navigation.navigate("auth/mainAuth/signin");
+          } else if (statusCode === 422) {
+            Alert.alert("Update failed", "Make sure to input the right entries.");
+          } else if (statusCode === 404) {
+            Alert.alert("Pitch not found");
+          } else {
+            Alert.alert("Update Error", "Try again later.");
+          }
+        } else {
+          Alert.alert("Login Failed", "Network error. Please check your internet connection.");
+        }
+        console.log(error);
+      } finally {
+        setDataLoading(false); // Hide loader after fetching data
+      }
+    };
+
+    checkAuth();
+    fetchData();
+  }, [authState.authenticated, authState.token, id, navigation]);
+
   const options = [
     { label: "yes", state: true },
     { label: "no", state: false },
@@ -67,66 +106,34 @@ const technical = () => {
       Alert.alert("Error", "You must agree to the terms and conditions to proceed.");
       return;
     }
-    console.log(id)
+
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
-     
+      const headers = { Authorization: `Bearer ${authState.token}` };
       const response = await axi.patch(
         `/pitch/update-pitch/${id}/technical_agreement`,
         { ...formData, hasSignedTechnicalAgreement: isAgreementChecked },
         { headers }
       );
       Alert.alert("Success", "Your competition information has been saved.");
-      navigation.navigate("updateform/review/personalreview", { id });
+      navigation.navigate("form/review/personalreview", { id });
     } catch (error) {
-      if (error.response) {
-        const statusCode = error.response.status;
-        if (statusCode === 400) {
-          Alert.alert("Update Error", "Try again later.");
-        } else if (statusCode === 401) {
-          navigation.navigate("auth/mainAuth/signin");
-        } else if (statusCode === 422) {
-          Alert.alert("Update failed", "Make sure to input the right entries.");
-        } else if (statusCode === 404) {
-          Alert.alert("Pitch not found");
-        } else {
-          Alert.alert("Update Error", "Try again later.");
-        }
-      } else {
-        Alert.alert("Update failed", "Network error. Please check your internet connection.");
-      }
       console.error("Error submitting form:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  if (dataLoading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#196100" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-        }}
-      >
-        <View style={styles.pageLinks}>
-          <Text style={styles.pageLinkText}>
-            Personal Information <AntDesign name="right" size={13} color="black" />
-          </Text>
-          <Text style={styles.pageLinkText}>
-            Professional Background <AntDesign name="right" size={13} color="black" />
-          </Text>
-          <Text style={styles.pageLinkText}>
-            Competition Questions <AntDesign name="right" size={15} color="black" />
-          </Text>
-          <Text style={styles.activePageLinkText}>
-              Technical Questions{" "}
-              <AntDesign name="right" size={13} color="black" />
-            </Text>
-        </View>
-      </ScrollView>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.questionsContainer}>
           <View style={styles.question}>
@@ -157,6 +164,7 @@ const technical = () => {
                     haveCurrentInvestorsDescription: newText,
                   }))
                 }
+                value={formData.haveCurrentInvestorsDescription}
               />
             )}
           </View>
@@ -188,6 +196,7 @@ const technical = () => {
                     debtsInfo: newText,
                   }))
                 }
+                value={formData.debtsInfo}
               />
             )}
           </View>
@@ -237,7 +246,7 @@ const technical = () => {
   );
 };
 
-export default technical;
+export default Technical;
 
 const styles = StyleSheet.create({
   container: {
@@ -250,21 +259,11 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // Ensure there's space for the button
     paddingTop: 30,
   },
-  pageLinks: {
-    flexDirection: "row",
+  loaderContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 20,
-  },
-  pageLinkText: {
-    fontSize: 13,
-    color: "grey",
-    marginHorizontal: 10,
-  },
-  activePageLinkText: {
-    fontSize: 13,
-    color: "#196100",
-    marginHorizontal: 10,
+    backgroundColor: "white",
   },
   questionsContainer: {
     flexDirection: "column",

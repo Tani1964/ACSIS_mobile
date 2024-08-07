@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   Switch,
   Alert,
   ScrollView,
+  
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -14,6 +15,7 @@ import { axi } from "@/app/context/AuthContext"; // Ensure axi is correctly impo
 import { useAuth } from "@/app/context/AuthContext";
 import * as SecureStore from "expo-secure-store";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Link } from "expo-router";
 
 const Account = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -25,6 +27,16 @@ const Account = () => {
       headerShown: false,
     });
   }, [navigation]);
+
+  const [user, setUser] = useState("");
+  
+  useEffect(() => {
+    const getUser = async () => {
+      const response = await axi.get("/user")
+      setUser(response.data);
+    };
+    getUser();
+  }, [authState]);
 
   const toggleNotifications = async () => {
     const auth = await authState.authenticated;
@@ -48,20 +60,16 @@ const Account = () => {
   };
 
   const signOutHandler = async () => {
-    await SecureStore.deleteItemAsync("token");
-    await setAuthState((prevState) => ({
-      ...prevState,
+    await SecureStore.deleteItemAsync("authToken");
+    setAuthState({
       token: null,
-    }));
-    await setAuthState((prevState) => ({
-      ...prevState,
       authenticated: false,
-    }));
-    navigation.navigate(""); // Ensure you have a SignIn screen to navigate to
+    });
+    navigation.navigate("auth/mainAuth/signin"); // Ensure you have a SignIn screen to navigate to
   };
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.headerContainer}>
           <Ionicons
@@ -78,20 +86,20 @@ const Account = () => {
               <Text style={styles.sectionTitle}>Profile</Text>
               <TouchableOpacity style={styles.optionContainer}>
                 <Text style={styles.optionText}>Email</Text>
-                <Text style={styles.optionSubText}>arlene.mccoy@gmail.com</Text>
+                <Text style={styles.optionSubText}>{user&&user.user.email}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.optionContainer}>
+              <TouchableOpacity style={styles.optionContainer} onPress={()=>navigation.navigate("user/phoneNumber")}>
                 <Text style={styles.optionText}>Phone number</Text>
-                <Text style={styles.optionSubText}>+2548123456789</Text>
+                <Text style={styles.optionSubText}>{user&&(user.user.phone?user.user.phone: "No phone number yet...")}</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <Text style={styles.sectionTitle}>Security</Text>
               <TouchableOpacity style={styles.optionContainer}>
                 <Text style={styles.optionText}>Change Password</Text>
               </TouchableOpacity>
-            </View>
+            </View> */}
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>General</Text>
@@ -110,10 +118,10 @@ const Account = () => {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Learn more</Text>
               <TouchableOpacity style={styles.optionContainer}>
-                <Text style={styles.optionText}>About</Text>
+                <Link href="https://www.africancaribbeansummit.com/concept-note" style={styles.optionText}>About Us</Link>
               </TouchableOpacity>
               <TouchableOpacity style={styles.optionContainer}>
-                <Text style={styles.optionText}>Terms & privacy policy</Text>
+                <Link href="auth/mainAuth/terms" style={styles.optionText}>Terms & privacy policy</Link>
               </TouchableOpacity>
             </View>
 
@@ -122,17 +130,20 @@ const Account = () => {
                 style={styles.optionContainer}
                 onPress={signOutHandler}
               >
-                <Text style={styles.optionText}>Sign Out</Text>
+                <Text style={[styles.optionText, { color: "red" }]}>Sign Out</Text>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
-          <TouchableOpacity
-            style={styles.optionContainer}
-            onPress={() => navigation.navigate("auth/mainAuth/signin")}
-          >
-            <Text style={styles.optionText}>Sign In</Text>
-          </TouchableOpacity>
+          <View style={styles.signInContainer}>
+            <Text style={styles.signInPrompt}>You are not signed in</Text>
+            <TouchableOpacity
+              style={styles.signInButton}
+              onPress={() => navigation.navigate("auth/mainAuth/signin")}
+            >
+              <Text style={styles.signInButtonText}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -142,15 +153,15 @@ const Account = () => {
 export default Account;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
     backgroundColor: "#FFFFFF",
-  },
-  container: {
-    flex: 1,
     padding: 20,
-    backgroundColor: "#FFFFFF",
   },
   headerContainer: {
     flexDirection: "row",
@@ -161,6 +172,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginLeft: 10,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
   },
   section: {
     marginBottom: 30,
@@ -184,5 +199,26 @@ const styles = StyleSheet.create({
   optionSubText: {
     fontSize: 14,
     color: "grey",
+  },
+  signInContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+  },
+  signInPrompt: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  signInButton: {
+    backgroundColor: "#196100",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+  },
+  signInButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

@@ -11,6 +11,7 @@ const competition = () => {
   const { authState } = useAuth();
   const route = useRoute();
   const { id } = route.params;
+  console.log(route)
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -34,7 +35,7 @@ const competition = () => {
   // }, []);
 
   const [formData, setFormData] = useState({
-    business_name: "",
+    businessName: "",
     businessDescription: "",
     reasonOfInterest: "",
     investmentPrizeUsagePlan: "",
@@ -45,13 +46,28 @@ const competition = () => {
   const submitHandler = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${authState.token}` };
+      const headers = { Authorization: `Bearer ${authState.token}`};
       console.log(formData)
-      // const response = await axi.patch(`/pitch/update-pitch/${id}/competition_questions`, formData, { headers });
-      Alert.alert("Success", "Yolur competition information has been saved.");
-      // navigation.navigate("form/technical", {id:id});
+      const response = await axi.patch(`/pitch/update-pitch/${id}/competition_questions`, formData, { headers });
+      Alert.alert("Success", "Your competition information has been saved.");
+      navigation.navigate("form/technical", {id:id});
     } catch (error) {
-      Alert.alert("Error", "There was an error submitting the form. Please try again.");
+      if (error.response) {
+        const statusCode = error.response.status;
+        if (statusCode === 400) {
+          Alert.alert("Update Error", "Try again later.");
+        } else if (statusCode === 401) {
+          navigation.navigate("auth/mainAuth/signin");
+        } else if (statusCode === 422) {
+          Alert.alert("Update failed", "Make sure to input the right entries.");
+        } else if (statusCode === 404) {
+          Alert.alert("Pitch not found");
+        } else {
+          Alert.alert("Update Error", "Try again later.");
+        }
+      } else {
+        Alert.alert("Update failed", "Network error. Please check your internet connection.");
+      }
     } finally {
       setLoading(false);
     }
@@ -81,6 +97,10 @@ const competition = () => {
               Competition Questions{" "}
               <AntDesign name="right" size={15} color="black" />
             </Text>
+            <Text style={styles.pageLinkText}>
+              Technical Questions{" "}
+              <AntDesign name="right" size={13} color="black" />
+            </Text>
           </View>
         </ScrollView>
         {/* Questions */}
@@ -93,11 +113,11 @@ const competition = () => {
               style={styles.textArea}
               textAlignVertical="top"
               placeholder="Business name"
-              value={formData.business_name}
+              value={formData.businessName}
               onChangeText={(newText) =>
                 setFormData((prevState) => ({
                   ...prevState,
-                  business_name: newText,
+                  businessName: newText,
                 }))
               }
             />
@@ -269,7 +289,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: "#196100",
-    borderRadius: 15,
+    borderRadius: 100,
     paddingVertical: 15,
     alignItems: "center",
   },
