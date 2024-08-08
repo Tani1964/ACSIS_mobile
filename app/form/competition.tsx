@@ -11,28 +11,13 @@ const competition = () => {
   const { authState } = useAuth();
   const route = useRoute();
   const { id } = route.params;
-  console.log(route)
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
-  // useEffect(() => {
-  //   const checkAuth = async () => {
-  //     try {
-  //       const auth = authState.authenticated;
-  //       if (!auth) {
-  //         navigation.navigate("login");
-  //       }
-  //       console.log('Authentication status successfully.');
-  //     } catch (error) {
-  //       console.error(error);
-  //     }
-  //   };
-  //   checkAuth();
-  // }, []);
 
   const [formData, setFormData] = useState({
     businessName: "",
@@ -47,7 +32,6 @@ const competition = () => {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${authState.token}`};
-      console.log(formData)
       const response = await axi.patch(`/pitch/update-pitch/${id}/competition_questions`, formData, { headers });
       Alert.alert("Success", "Your competition information has been saved.");
       navigation.navigate("form/technical", {id:id});

@@ -19,9 +19,8 @@ const FullView = () => {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [destination, setDestination] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [event, setEvent] = useState(null);
   const route = useRoute();
-  const { eventID } = route.params;
+  const { eventID, event } = route.params;
 
   const { width, height } = Dimensions.get("window");
   const ASPECT_RATIO = width / height;
@@ -36,18 +35,8 @@ const FullView = () => {
     });
   }, [navigation]);
 
-  Location.setGoogleApiKey("YOUR_GOOGLE_API_KEY");
+  Location.setGoogleApiKey("AIzaSyCWDZCZ1ewtuTm5hl2euGj0mrMn-F0DJIw");
 
-  const getEvent = async () => {
-    try {
-      const response = await axi.get(`/event/get-event/${eventID}`);
-      console.log('Event data:', response.data);
-      setEvent(response.data);
-    } catch (err) {
-      console.log('Error fetching event:', err);
-      Alert.alert("Error", "Failed to fetch event data. Please try again later.");
-    }
-  };
 
   const getPermissions = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -105,20 +94,16 @@ const FullView = () => {
   };
 
   useEffect(() => {
-    getEvent();
+    console.log(event)
   }, [eventID]);
 
-  useEffect(() => {
     if (event) {
       getPermissions();
     }
-  }, [event]);
 
-  useEffect(() => {
     if (event && event.location) {
       geocode();
     }
-  }, [event?.location]);
 
   const formatDateTime = (dateTimeString) => {
     const date = new Date(dateTimeString);
@@ -151,7 +136,7 @@ const FullView = () => {
               <MapViewDirections
                 origin={currentLocation}
                 destination={destination}
-                apikey="YOUR_GOOGLE_API_KEY"
+                apikey="AIzaSyCWDZCZ1ewtuTm5hl2euGj0mrMn-F0DJIw"
                 strokeWidth={3}
                 strokeColor="hotpink"
               />

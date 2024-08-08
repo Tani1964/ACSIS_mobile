@@ -29,7 +29,7 @@ const Home = () => {
       <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
     }>
       <Header />
-      {/* <View style={styles.content}>
+      <View style={styles.content}>
         {hasError ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>Failed to load content.</Text>
@@ -43,7 +43,7 @@ const Home = () => {
             onError={handleError}
           />
         )}
-      </View> */}
+      </View>
     </View>
   );
 }

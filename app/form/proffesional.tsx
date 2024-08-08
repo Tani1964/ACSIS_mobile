@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -17,6 +17,11 @@ import { useAuth } from "../context/AuthContext";
 const Proffessional = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: "",
+    });
+  }, [navigation]);
   
   const { id } = route.params || {}; // Default to an empty object to avoid destructuring undefined
  
@@ -28,7 +33,6 @@ const Proffessional = () => {
   });
 
   useEffect(() => {
-    console.log("Route Params:", route.params);
     if (!id) {
       console.log("ID not found in route params");
     }
@@ -41,7 +45,6 @@ const Proffessional = () => {
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         }
-        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
@@ -54,20 +57,13 @@ const Proffessional = () => {
   };
 
   const submitHandler = async () => {
-    console.log(id)
     setLoading(true);
     const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
     try {
-      console.log(route);
-      
-      console.log(`/pitch/update-pitch/${id}/professional_background`, formData, {
-        headers,
-      });
 
       const response = await axi.patch(`/pitch/update-pitch/${id}/professional_background`, formData, {
         headers,
       });
-      console.log(formData);
       Alert.alert("Success", "Your professional information has been saved.");
       navigation.navigate("form/competition", {id:id});
     } catch (error) {

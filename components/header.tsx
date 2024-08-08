@@ -17,7 +17,6 @@ const Header = () => {
       try {
         const response = await axi.get("/user", { headers });
         setUser(response.data);
-        console.log(response.data);
       } catch (error) {
         console.error("Error fetching user:", error);
       }
@@ -59,7 +58,7 @@ const Header = () => {
       />
       <View style={styles.rightIcons}>
         <Link href="user/notifications">
-          {user ? (
+          {(authState.authenticated && user) ? (
             <UserAvatar size={40} name={user.user.full_name} bgColor="#196100" />
           ) : (
             <Ionicons name="person-circle-sharp" size={37} color="lightgrey" />

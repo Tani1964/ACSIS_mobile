@@ -1,74 +1,102 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   ScrollView,
   Modal,
   TextInput,
   Alert,
+  RefreshControl,
 } from "react-native";
 import Header from "../../components/header";
-import { axi } from "../context/AuthContext";
-import { useAuth } from "../context/AuthContext";
+import { axi, useAuth } from "../context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
 
 const Votes = () => {
   const [page, setPage] = useState("votes");
-  const [votingData, setVotingData] = useState([
-  ]);
+  const [votingData, setVotingData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const { authState } = useAuth();
   const navigation = useNavigation();
 
-  const nominationData = [
-    { id: 1, title: "DesignNow", status: "Nominee" },
-    { id: 2, title: "BQ Pharmaceutical Solutions", status: "Nominee" },
-    { id: 3, title: "Berga Enterprises", status: "Nominee" },
-    { id: 4, title: "Everest Trading Co.", status: "Nominee" },
-    { id: 5, title: "Shapig Enterprises", status: "Nominee" },
-    { id: 7, title: "Shapig Enterprises", status: "Nominee" },
-    { id: 8, title: "Shapig Enterprises", status: "Nominee" },
-    { id: 9, title: "Shapig Enterprises", status: "Nominee" },
-  ];
-
   const [modalVisible, setModalVisible] = useState(false);
   const [voteModalVisible, setVoteModalVisible] = useState(false);
-  const [selectedAwardTitle, setSelectedAwardTitle] = useState("");
-  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedAward, setSelectedAward] = useState(null);
+  const [selectedCompany, setSelectedCompany] = useState(null);
   const [nominationInput, setNominationInput] = useState("");
+  const [nominations, setNominations] = useState([]);
+  const [nominationSuggestions, setNominationSuggestions] = useState([]);
+  const [nominee, setNominee] = useState(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const auth = await authState.authenticated;
+        console.log(authState.token)
+        if (!auth) {
+          navigation.navigate("auth/mainAuth/signin");
+        } else {
+          fetchData();
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkAuth();
+  }, [authState.authenticated, navigation, fetchData]);
 
   const fetchData = async () => {
     try {
       const headers = { Authorization: `Bearer ${authState.token}` };
-      const response = await axi.get("/award/get-awards", {headers});
-      setVotingData(response.data.awards); 
-      console.log(response.data)
+      const response = await axi.get("/award/get-awards", { headers });
+      setVotingData(response.data.awards);
+      setNominations(response.data.nominations);
     } catch (error) {
-      console.error("Error fetching events:", error);
-      if (error.response) {
-        const statusCode = error.response.status;
-        if (statusCode === 400) {
-          Alert.alert("Error", "Bad request. Please try again later.");
-        } else if (statusCode === 401) {
-          console.log("Error", "Unauthorized access. Please log in again.");
-          navigation.navigate("auth/mainAuth/signin");
-        } else if (statusCode === 403) {
-          Alert.alert("Error", "Forbidden access. You do not have permission to access this resource.");
-        } else if (statusCode === 404) {
-          Alert.alert("Error", "Events not found.");
-        } else if (statusCode === 500) {
-          console.log("Error", "Internal server error. Please try again later.");
-        } else {
-          Alert.alert("Error", "An unexpected error occurred. Please try again later.");
-        }
-      } else {
-        Alert.alert("Error", "Network error. Please check your internet connection.");
-      }
+      console.error("Error fetching awards:", error);
+      handleError(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleError = (error) => {
+    if (error.response) {
+      const statusCode = error.response.status;
+      switch (statusCode) {
+        case 400:
+          Alert.alert("Error", "Bad request. Please try again later.");
+          break;
+        case 401:
+          console.log("Error", "Unauthorized access. Please log in again.");
+          navigation.navigate("auth/mainAuth/signin");
+          break;
+        case 403:
+          Alert.alert(
+            "Error",
+            "Forbidden access. You do not have permission to access this resource."
+          );
+          break;
+        case 404:
+          Alert.alert("Error", "Awards not found.");
+          break;
+        case 500:
+          console.log("Error", "Internal server error. Please try again later.");
+          break;
+        default:
+          Alert.alert(
+            "Error",
+            "An unexpected error occurred. Please try again later."
+          );
+          break;
+      }
+    } else {
+      Alert.alert(
+        "Error",
+        "Network error. Please check your internet connection."
+      );
     }
   };
 
@@ -76,165 +104,238 @@ const Votes = () => {
     fetchData();
   }, []);
 
-  const openNominationModal = (awardTitle:string) => {
-    setSelectedAwardTitle(awardTitle);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData().finally(() => setRefreshing(false));
+  }, []);
+
+  const openNominationModal = (award) => {
+    setSelectedAward(award);
     setModalVisible(true);
   };
 
-  const openVoteModal = (awardTitle:string) => {
-    setSelectedAwardTitle(awardTitle);
+  const openVoteModal = (award) => {
+    setSelectedAward(award);
     setVoteModalVisible(true);
   };
 
-  const submitNomination = () => {
-    // Handle nomination submission logic here
-    if (nominationInput.trim() === "") {
+  const submitNomination = async () => {
+    if (nominationInput.trim() === "" || !nominee) {
       Alert.alert("Error", "Please enter a company name to nominate.");
-    } else {
-      // Call an API or update the state
+      return;
+    }
+  
+    try {
+      const formData = {
+        nomineeId: nominee.id,
+        nomineeType: "business",
+        awardId: selectedAward.id,
+        reason: "",
+      };
+  
+      await axi.post("/award/nominate-for-award", formData);
+  
       Alert.alert(
         "Nomination Submitted",
-        `You nominated ${nominationInput} for ${selectedAwardTitle}`
+        `You nominated ${nominationInput} for ${selectedAward.title}`
       );
       setModalVisible(false);
       setNominationInput("");
+      setNominee(null); // Clear the selected nominee
+      setNominationSuggestions([]); // Clear suggestions
+    } catch (error) {
+      let message = "An error occurred while submitting your nomination. Please try again later.";
+  
+      if (error.response) {
+        const statusCode = error.response.status;
+        switch (statusCode) {
+          case 400:
+            // Bad request
+            message = "Invalid nomination request. Please check your input.";
+            break;
+          case 401:
+            // Unauthorized access
+            message = "Unauthorized access. Please log in again.";
+            navigation.navigate("auth/mainAuth/signin");
+            break;
+          case 403:
+            // Forbidden access
+            message = "Forbidden access. You do not have permission to perform this action.";
+            break;
+          case 404:
+            // Resource not found
+            message = "Award or nominee not found.";
+            break;
+          case 409:
+            // Conflict
+            message = "You have already nominated this company for this award.";
+            break;
+          case 500:
+            // Internal server error
+            message = "Internal server error. Please try again later.";
+            break;
+          default:
+            // Generic error message
+            message = "An unexpected error occurred. Please try again later.";
+            break;
+        }
+      } else if (error.request) {
+        // No response received
+        message = "Network error. Please check your internet connection.";
+      } else {
+        // Error setting up request
+        message = "An error occurred while setting up the request.";
+      }
+  
+      Alert.alert("Error", message);
     }
   };
+  
 
-  const submitVote = () => {
-    // Handle vote submission logic here
-    if (!selectedCompany) {
+  const submitVote = async () => {
+    if (!selectedCompany || !selectedAward) {
       Alert.alert("Error", "Please select a company to vote for.");
-    } else {
-      // Call an API or update the state
+      return;
+    }
+
+    try {
+      const headers = { Authorization: `Bearer ${authState.token}` };
+
+      await axi.post(
+        "/award/vote-for-nominee",
+        {
+          awardId: selectedAward.id,
+          nomineeId: selectedCompany.id,
+        },
+        { headers }
+      );
       Alert.alert(
         "Vote Submitted",
-        `You voted for ${selectedCompany} in ${selectedAwardTitle}`
+        `You voted for ${selectedCompany.business_nominee.business_name}`
       );
+    } catch (error) {
+      let message =
+        "An error occurred while submitting your vote. Please try again later.";
+
+      if (error.response) {
+        const statusCode = error.response.status;
+        switch (statusCode) {
+          case 400:
+            // Specific error message for already voted
+            message = "You have already voted for this award category.";
+            break;
+          case 401:
+            // Unauthorized access
+            message = "Unauthorized access. Please log in again.";
+            navigation.navigate("auth/mainAuth/signin");
+            break;
+          case 403:
+            // Forbidden access
+            message = "Forbidden access. You do not have permission to perform this action.";
+            break;
+          case 404:
+            // Resource not found
+            message = "Award or nominee not found.";
+            break;
+          case 500:
+            // Internal server error
+            message = "Internal server error. Please try again later.";
+            break;
+          default:
+            // Generic error message
+            message = "An unexpected error occurred. Please try again later.";
+            break;
+        }
+      } else if (error.request) {
+        // No response received
+        message = "Network error. Please check your internet connection.";
+      } else {
+        // Error setting up request
+        message = "An error occurred while setting up the request.";
+      }
+
+      Alert.alert("Error", message);
+    } finally {
       setVoteModalVisible(false);
-      setSelectedCompany("");
+      setSelectedCompany(null);
     }
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.itemContainer}>
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>{item.title}</Text>
-        {page === "votes" && (
-          <Text style={styles.votes}>{item.votes} votes</Text>
-        )}
-        {page === "nominations" && (
-          <Text style={styles.status}>{item.status}</Text>
-        )}
-      </View>
-      {page === "votes" && (
-        <TouchableOpacity
-          style={styles.voteButton}
-          onPress={() => openVoteModal(item.title)}
-        >
-          <Text style={styles.voteButtonText}>Vote</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+  const fetchNominationSuggestions = useCallback(async () => {
+    if (nominationInput.trim() === "") {
+      setNominationSuggestions([]);
+      return;
+    }
+
+    try {
+      const headers = { Authorization: `Bearer ${authState.token}` };
+      const response = await axi.get(
+        `/user/get-search-by-query-string?type=business&query=${nominationInput}`,
+        { headers }
+      );
+      setNominationSuggestions(response.data.results || []);
+    } catch (error) {
+      console.error("Error fetching nomination suggestions:", error);
+    }
+  }, [nominationInput, authState.token]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchNominationSuggestions();
+    }, 1000);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [nominationInput, fetchNominationSuggestions]);
 
   return (
     <View style={styles.container}>
       <Header />
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, page === "votes" && styles.activeTab]}
-          onPress={() => setPage("votes")}
-        >
-          <Text
-            style={[styles.tabText, page === "votes" && styles.activeTabText]}
-          >
-            Votes
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, page === "nominations" && styles.activeTab]}
-          onPress={() => setPage("nominations")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              page === "nominations" && styles.activeTabText,
-            ]}
-          >
-            Nominations
-          </Text>
-        </TouchableOpacity>
-      </View>
-      
       {page === "votes" ? (
-        <ScrollView style={{ paddingHorizontal: 10 }}>
+        <ScrollView
+          style={{ paddingHorizontal: 10, paddingVertical: 10 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           {votingData.map((award) => (
-            <View
-              key={award.id}
-              style={{
-                paddingVertical: 20,
-                borderBottomWidth: 1,
-                borderColor: "#949494",
-              }}
-            >
-              <View
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                  {award.title} 🏅
-                </Text>
-                <TouchableOpacity
-                  style={styles.nominateButton}
-                  onPress={() => openNominationModal(award.title)}
-                >
-                  <Text style={styles.nominateButtonText}>Nominate</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.nominateButton}
-                  onPress={() => openNominationModal(award.title)}
-                >
-                  <Text style={styles.nominateButtonText}>Vote</Text>
-                </TouchableOpacity>
+            <View key={award.id} style={styles.awardContainer}>
+              <View style={styles.awardHeader}>
+                <Text style={styles.awardTitle}>{award.title} 🏅</Text>
+                {award.status === "nominations-open" ? (
+                  <TouchableOpacity
+                    style={styles.nominateButton}
+                    onPress={() => openNominationModal(award)}
+                  >
+                    <Text style={styles.nominateButtonText}>Nominate</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.nominateButton}
+                    onPress={() => openVoteModal(award)}
+                  >
+                    <Text style={styles.nominateButtonText}>Vote</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              {/* award description */}
-              <Text>fxvhkbdb</Text>
             </View>
           ))}
         </ScrollView>
       ) : (
         <ScrollView style={{ paddingHorizontal: 10 }}>
-          {nominationData.map((award) => (
-            <View
-              key={award.id}
-              style={{
-                paddingVertical: 20,
-                borderBottomWidth: 1,
-                borderColor: "#949494",
-              }}
-            >
-              <View
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-                  {award.title} 🏅
-                </Text>
-                
+          {nominations.length === 0 && (
+            <Text>You haven't been Nominated Yet.</Text>
+          )}
+          {Array.isArray(nominations) &&
+            nominations.map((award) => (
+              <View key={award.id} style={styles.awardContainer}>
+                <View style={styles.awardHeader}>
+                  <Text style={styles.awardTitle}>{award.title} 🏅</Text>
+                </View>
               </View>
-              {/* award description */}
-              <Text>fxvhkbdb</Text>
-            </View>
-          ))}
+            ))}
         </ScrollView>
       )}
+
       {/* Nomination Modal */}
       <Modal
         animationType="slide"
@@ -247,25 +348,42 @@ const Votes = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>
-              Nominate a Company for {selectedAwardTitle}
+              Nominate for {selectedAward?.title}
             </Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter company name"
               value={nominationInput}
-              onChangeText={(text) => setNominationInput(text)}
+              onChangeText={(text) => {
+                setNominationInput(text);
+                setNominee(null); // Clear the selected nominee when text changes
+              }}
+              placeholder="Enter business name"
             />
+            <ScrollView>
+              {nominationSuggestions.map((suggestion) => (
+                <TouchableOpacity
+                  key={suggestion.id}
+                  onPress={() => {
+                    setNominationInput(suggestion.business_name);
+                    setNominee(suggestion);
+                  }}
+                  style={styles.suggestionItem}
+                >
+                  <Text>{suggestion.business_name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
             <TouchableOpacity
-              style={styles.submitButton}
+              style={styles.modalButton}
               onPress={submitNomination}
             >
-              <Text style={styles.submitButtonText}>Submit</Text>
+              <Text style={styles.modalButtonText}>Submit Nomination</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.closeButton}
+              style={[styles.modalButton, styles.cancelButton]}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Text style={styles.modalButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -282,40 +400,58 @@ const Votes = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              Vote for a Company in {selectedAwardTitle}
-            </Text>
-            {votingData.map((company) => (
-              <TouchableOpacity
-                key={company.id}
-                style={styles.radioContainer}
-                onPress={() => setSelectedCompany(company.title)}
-              >
-                <View
-                  style={[
-                    styles.radioButton,
-                    selectedCompany === company.title &&
-                      styles.radioButtonSelected,
-                  ]}
-                />
-                <Text style={styles.radioLabel}>{company.title}</Text>
-              </TouchableOpacity>
-            ))}
-            <View style={{display:"flex", flexDirection:"row", gap:10}}>
-
-            <TouchableOpacity style={styles.submitButton} onPress={submitVote}>
-              <Text style={styles.submitButtonText}>Submit Vote</Text>
+            <Text style={styles.modalTitle}>Vote for {selectedAward?.title}</Text>
+            <ScrollView>
+              {selectedAward &&
+                selectedAward.nominees.map((nominee) => (
+                  <TouchableOpacity
+                    key={nominee.id}
+                    onPress={() => setSelectedCompany(nominee)}
+                    style={[
+                      styles.suggestionItem,
+                      {
+                        backgroundColor:
+                          selectedCompany === nominee ? "lightgray" : "white",
+                      },
+                    ]}
+                  >
+                    <Text>{nominee.business_nominee.business_name}</Text>
+                  </TouchableOpacity>
+                ))}
+            </ScrollView>
+            <TouchableOpacity style={styles.modalButton} onPress={submitVote}>
+              <Text style={styles.modalButtonText}>Submit Vote</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.closeButton}
+              style={[styles.modalButton, styles.cancelButton]}
               onPress={() => setVoteModalVisible(false)}
-              >
-              <Text style={styles.closeButtonText}>Close</Text>
+            >
+              <Text style={styles.modalButtonText}>Cancel</Text>
             </TouchableOpacity>
-              </View>
           </View>
         </View>
       </Modal>
+
+      <View style={styles.bottomTabContainer}>
+        <TouchableOpacity
+          onPress={() => setPage("votes")}
+          style={[
+            styles.bottomTab,
+            page === "votes" && styles.bottomTabActive,
+          ]}
+        >
+          <Text style={styles.bottomTabText}>Vote</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setPage("nominations")}
+          style={[
+            styles.bottomTab,
+            page === "nominations" && styles.bottomTabActive,
+          ]}
+        >
+          <Text style={styles.bottomTabText}>Nominations</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -323,83 +459,36 @@ const Votes = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#f8f8f8",
   },
-  tabContainer: {
+  awardContainer: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: "white",
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  awardHeader: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignSelf: "center",
-    marginVertical: 16,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 100,
-    paddingHorizontal: 1,
-    backgroundColor: "#949494",
-    width: "42%",
-  },
-  tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 100,
-  },
-  activeTab: {
-    backgroundColor: "#fff",
-    borderColor: "#949494",
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#666",
-  },
-  activeTabText: {
-    color: "#949494",
-  },
-  listContainer: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-  },
-  itemContainer: {
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    alignItems: "center",
   },
-  titleContainer: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  votes: {
-    fontSize: 14,
-    color: "#666",
-  },
-  status: {
-    fontSize: 14,
-    color: "#666",
-  },
-  voteButton: {
-    backgroundColor: "#196100", // Updated button color
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 100,
-  },
-  voteButtonText: {
-    color: "#fff",
-    fontSize: 14,
+  awardTitle: {
+    fontSize: 18,
     fontWeight: "bold",
   },
   nominateButton: {
-    backgroundColor: "#196100", // Updated button color
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 100,
+    backgroundColor: "green",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
   },
   nominateButtonText: {
-    color: "#fff",
-    fontSize: 14,
+    color: "white",
     fontWeight: "bold",
   },
   modalContainer: {
@@ -410,66 +499,62 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "80%",
+    padding: 20,
     backgroundColor: "white",
-    borderRadius: 8,
-    padding: 16,
-    alignItems: "center",
+    borderRadius: 10,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 16,
+    marginBottom: 15,
   },
   input: {
-    width: "100%",
+    height: 40,
+    borderColor: "#ccc",
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 16,
+    borderRadius: 5,
+    marginBottom: 15,
+    paddingHorizontal: 10,
   },
-  submitButton: {
-    backgroundColor: "#196100", // Updated button color
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 100,
-    marginBottom: 8,
+  suggestionItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
-  submitButtonText: {
-    color: "#fff",
-    fontSize: 14,
+  modalButton: {
+    backgroundColor: "green",
+    paddingVertical: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  cancelButton: {
+    backgroundColor: "#e74c3c",
+  },
+  modalButtonText: {
+    color: "white",
     fontWeight: "bold",
+    textAlign: "center",
   },
-  closeButton: {
-    backgroundColor: "#ccc",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 100,
-  },
-  closeButtonText: {
-    color: "#333",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  radioContainer: {
+  bottomTabContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 8,
+    justifyContent: "space-around",
+    borderTopWidth: 1,
+    borderColor: "#ddd",
+    paddingVertical: 10,
+    backgroundColor: "white",
   },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#ccc",
-    marginRight: 8,
+  bottomTab: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
   },
-  radioButtonSelected: {
-    borderColor: "#196100",
-    backgroundColor: "#196100",
+  bottomTabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#3498db",
   },
-  radioLabel: {
+  bottomTabText: {
     fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
   },
 });
 

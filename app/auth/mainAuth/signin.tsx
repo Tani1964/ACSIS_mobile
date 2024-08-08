@@ -2,7 +2,6 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   TextInput,
   TouchableOpacity,
   ScrollView,
@@ -16,7 +15,6 @@ import { useNavigation } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
 import { useAuth } from "@/app/context/AuthContext";
 import * as SecureStore from "expo-secure-store";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const Signin = () => {
   const [formData, setFormData] = useState({
@@ -24,6 +22,7 @@ const Signin = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility
   const navigation = useNavigation();
   const { setAuthState } = useAuth();
 
@@ -36,7 +35,6 @@ const Signin = () => {
   const submitHandler = async () => {
     setLoading(true);
     try {
-      console.log(formData);
       const response = await axi.post("/auth/login", formData);
       await SecureStore.setItemAsync("authToken", response.data.token); // Ensure consistent key
       const token = await SecureStore.getItemAsync("authToken"); // Ensure consistent key
@@ -45,7 +43,7 @@ const Signin = () => {
         authenticated: true,
       });
       navigation.navigate("index");
-      ("Token stored and state set:", token);
+      console.log("Token stored and state set:", token);
     } catch (error) {
       if (error.response) {
         const statusCode = error.response.status;
@@ -107,8 +105,17 @@ const Signin = () => {
                 }))
               }
               defaultValue={formData.password}
-              secureTextEntry={true}
+              secureTextEntry={!passwordVisible} // Toggle secureTextEntry
             />
+            <TouchableOpacity
+              onPress={() => setPasswordVisible(!passwordVisible)}
+            >
+              <Ionicons
+                name={passwordVisible ? "eye-outline" : "eye-off-outline"}
+                size={24}
+                color="lightgrey"
+              />
+            </TouchableOpacity>
           </View>
           <TouchableOpacity
             onPress={() =>

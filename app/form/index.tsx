@@ -83,7 +83,6 @@ const Index = () => {
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         }
-        console.log("Authentication status successfully.");
         setLoading(false); // Set loading to false once authentication is done
       } catch (error) {
         console.error(error);

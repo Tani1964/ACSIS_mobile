@@ -23,7 +23,7 @@ const ConfirmationCode = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
@@ -69,12 +69,7 @@ const ConfirmationCode = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        <Ionicons
-          name="arrow-back"
-          size={24}
-          color="black"
-          style={styles.backIcon}
-        />
+        
         <Text style={styles.headerTitle}>Enter the confirmation code</Text>
         <Text style={styles.headerSubtitle}>
           To verify your email, enter the 6-digit code we sent to {email}

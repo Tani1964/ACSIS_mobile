@@ -1,15 +1,26 @@
-import { StyleSheet, Text, View, Image, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
-import { axi, useAuth } from "@/app/context/AuthContext";
-import { useNavigation } from '@react-navigation/native';
+import { axi } from "@/app/context/AuthContext";
+import { useNavigation } from "@react-navigation/native";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
@@ -19,18 +30,54 @@ const Signup = () => {
   }, [navigation]);
 
   const submitHandler = async () => {
+    // Input validation
+    if (!email || !fullName || !password) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      Alert.alert("Error", "Please enter a valid email address.");
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters long.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await axi.post("/auth/register", {email, fullName, password});
-      if (response.error) {
-        alert(response.msg);
+      const response = await axi.post("/auth/register", {
+        email,
+        fullName,
+        password,
+      });
+      if (response.data.error) {
+        Alert.alert("Error", response.data.msg);
       } else {
-        navigation.navigate('auth/mainAuth/confirmationCode', { email }); // Pass email as parameter
+        navigation.navigate("auth/mainAuth/confirmationCode", { email });
       }
     } catch (error) {
       console.log(error);
-      alert('An error occurred. Please try again.');
-    } finally{
+      if (error.response) {
+        // Server responded with a status other than 200 range
+        switch (error.response.status) {
+          case 409:
+            Alert.alert("Error", "Email already exists. Please sign in.");
+            break;
+          case 400:
+            Alert.alert("Error", "Invalid request. Please check your input.");
+            break;
+          default:
+            Alert.alert("Error", "An error occurred. Please try again later.");
+        }
+      } else if (error.request) {
+        // Request was made but no response received
+        Alert.alert("Error", "Network error. Please check your connection.");
+      } else {
+        // Something else happened while setting up the request
+        Alert.alert("Error", "An unexpected error occurred.");
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -39,9 +86,14 @@ const Signup = () => {
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <View style={styles.headerContainer}>
-          <Image source={require("../../../assets/images/PNG File 1.png")} style={styles.headerImage} />
+          <Image
+            source={require("../../../assets/images/PNG File 1.png")}
+            style={styles.headerImage}
+          />
           <Text style={styles.headerTitle}>Ready to Pitch your Ideas?</Text>
-          <Text style={styles.headerSubtitle}>Enter your details to create your account</Text>
+          <Text style={styles.headerSubtitle}>
+            Enter your details to create your account
+          </Text>
         </View>
 
         {/* Inputs */}
@@ -72,8 +124,17 @@ const Signup = () => {
               placeholder="Password"
               onChangeText={(newText) => setPassword(newText)}
               value={password}
-              secureTextEntry={true}
+              secureTextEntry={!passwordVisible} // Toggle secureTextEntry
             />
+            <TouchableOpacity
+              onPress={() => setPasswordVisible(!passwordVisible)}
+            >
+              <Ionicons
+                name={passwordVisible ? "eye-outline" : "eye-off-outline"}
+                size={24}
+                color="lightgrey"
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -82,29 +143,36 @@ const Signup = () => {
           <TouchableOpacity
             style={styles.signupButton}
             onPress={submitHandler}
+            disabled={loading} // Disable button during loading
           >
             {loading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={{color: "white"}}>Sign Up</Text>
+              <Text style={{ color: "white" }}>Sign Up</Text>
             )}
           </TouchableOpacity>
-          {/* <TouchableOpacity */}
-            {/* // style={styles.googleButton} */}
-            {/* // onPress={() => { */}
-            {/* // }} */}
-          {/* // > */}
-            {/* // <Text style={styles.googleButtonText}>Sign up with Google</Text> */}
-          {/* // </TouchableOpacity> */}
         </View>
 
         {/* Links */}
         <View style={styles.footerContainer}>
           <Text style={styles.footerText}>
-            Already have an account? <Link href="/auth/mainAuth/signin" style={styles.signinLink}>Sign in</Link>
+            Already have an account?{" "}
+            <Link href="/auth/mainAuth/signin" style={styles.signinLink}>
+              Sign in
+            </Link>
           </Text>
           <Text style={styles.footerNote}>
-            By creating an account you agree to ACSS & PITCH's <Link href="/auth/mainAuth/terms." style={styles.footerLink}>Privacy policy</Link> and <Link href="auth/mainAuth/terms" style={styles.footerLink}>Terms of use</Link>
+            By creating an account you agree to ACSS & PITCH's{" "}
+            <Link
+              href="/auth/mainAuth/terms"
+              style={styles.footerLink}
+            >
+              Privacy policy
+            </Link>{" "}
+            and{" "}
+            <Link href="auth/mainAuth/terms" style={styles.footerLink}>
+              Terms of use
+            </Link>
           </Text>
         </View>
       </View>

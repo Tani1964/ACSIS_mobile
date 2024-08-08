@@ -14,17 +14,13 @@ const terms = () => {
   const navigation = useNavigation();
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
   return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="close" size={24} color="black" />
-          </TouchableOpacity>
-        </View>
+        
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <Text style={styles.title}>Terms of Service</Text>
           <Text style={styles.sectionTitle}>Introduction</Text>

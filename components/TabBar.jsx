@@ -11,7 +11,6 @@ const TabBar = ({ state, descriptors, navigation }) => {
     useEffect(() => {
         const fetchAuthState = async () => {
             const authValue = await authState.authenticated
-            console.log(authValue)
             setAuthState(authValue);
         };
         fetchAuthState();
@@ -28,7 +27,6 @@ const TabBar = ({ state, descriptors, navigation }) => {
 
     const primaryColor = "#196100";
     const greyColor = "grey";
-    console.log(authState)
     return (
         <View style={styles.tabbar}>
             {state.routes.map((route, index) => {
@@ -39,11 +37,9 @@ const TabBar = ({ state, descriptors, navigation }) => {
                         : options.title !== undefined
                             ? options.title
                             : route.name;
-                console.log(typeof(authState.authenticated))
-                console.log("fff",authState.authenticated == true )
                 const pitchState = authState.authenticated  ? "(pitch)/pitchList" : "(pitch)/index";
 
-                if (!['index', 'events', "business", pitchState, "votes"].includes(route.name)) return null;
+                if (!['index', 'events', "business", pitchState, authState.authenticated && "votes"].includes(route.name)) return null;
 
                 const isFocused = state.index === index;
 

@@ -88,10 +88,10 @@ const Account = () => {
                 <Text style={styles.optionText}>Email</Text>
                 <Text style={styles.optionSubText}>{user&&user.user.email}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.optionContainer} onPress={()=>navigation.navigate("user/phoneNumber")}>
+              {/* <TouchableOpacity style={styles.optionContainer} onPress={()=>navigation.navigate("user/phoneNumber")}>
                 <Text style={styles.optionText}>Phone number</Text>
                 <Text style={styles.optionSubText}>{user&&(user.user.phone?user.user.phone: "No phone number yet...")}</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
 
             {/* <View style={styles.section}>

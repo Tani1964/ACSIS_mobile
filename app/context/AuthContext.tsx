@@ -33,15 +33,10 @@ export const AuthProvider: React.FC = ({ children }) => {
     const loadToken = async () => {
       try {
         const token = await SecureStore.getItemAsync("authToken");
-        console.log("Loaded token:", token);
 
         if (token) {
           axi.defaults.headers.common["Authorization"] = `Bearer ${token}`;
           setAuthState({
-            token: token,
-            authenticated: true,
-          });
-          console.log("Auth state updated:", {
             token: token,
             authenticated: true,
           });

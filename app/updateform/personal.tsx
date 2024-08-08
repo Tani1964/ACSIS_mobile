@@ -33,6 +33,12 @@ const Personal = () => {
   const { itemId } = route.params || {}; // Default to an empty object to avoid destructuring undefined
   const id = itemId;
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: "",
+    });
+  }, [navigation]);
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -49,11 +55,8 @@ const Personal = () => {
       setLoading(true); // Start loading
       try {
         const headers = { Authorization: `Bearer ${authState.token}` };
-        console.log(headers);
-        console.log(id);
         const response = await axi.get(`/pitch/get-pitch/${id}`, { headers });
         const data = response.data.pitch.personal_information;
-        console.log(data);
         setFormData({
           fullName: data.full_name,
           email: data.email,
@@ -149,7 +152,6 @@ const Personal = () => {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${authState.token}` };
-      console.log("fff", formData);
       await axi.patch(
         `/pitch/update-pitch/${id}/personal_information/`,
         formData,

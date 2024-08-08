@@ -20,7 +20,6 @@ const Competition = () => {
   const { authState } = useAuth();
   const route = useRoute();
   const { id } = route.params;
-  console.log("first", route);
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -34,7 +33,7 @@ const Competition = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
@@ -56,7 +55,6 @@ const Competition = () => {
         const headers = { Authorization: `Bearer ${authState.token}` };
         const response = await axi.get(`/pitch/get-pitch/${id}`, { headers });
         const data = response.data.pitch.competition_questions;
-        console.log(data);
         data && setFormData({
           businessName: data.business_name,
           businessDescription: data.business_description,

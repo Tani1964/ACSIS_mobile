@@ -25,7 +25,7 @@ const PersonalReviewScreen = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
   
@@ -39,7 +39,6 @@ const PersonalReviewScreen = () => {
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         }
-        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
@@ -51,7 +50,6 @@ const PersonalReviewScreen = () => {
         headers,
       });
       setData(response.data.pitch.personal_information);
-      console.log(response);
     };
     
     checkAuth();
@@ -71,9 +69,7 @@ const PersonalReviewScreen = () => {
   return (
     <View style={styles.container}>
       <View style={{ display: "flex" }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={24} color="black" />
-        </TouchableOpacity>
+       
         <Text style={styles.header}>Personal Information</Text>
       </View>
       <ScrollView>

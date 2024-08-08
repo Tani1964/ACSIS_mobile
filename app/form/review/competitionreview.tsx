@@ -18,7 +18,7 @@ const competitionReview = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
   const route = useRoute();
@@ -31,7 +31,6 @@ const competitionReview = () => {
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         }
-        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
@@ -42,7 +41,6 @@ const competitionReview = () => {
         headers,
       });
       setData(response.data.pitch.competition_questions);
-      console.log(response);
     };
     checkAuth();
     getData();
@@ -51,9 +49,7 @@ const competitionReview = () => {
   return (
     <View style={styles.container}>
       <View style={{display:"flex"}}>
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={24} color="black" />
-        </TouchableOpacity>
+      
       <Text style={styles.header}>Competition Questions</Text>
       </View>
         <View style={styles.infoItem}>
@@ -132,7 +128,6 @@ const competitionReview = () => {
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() =>(
-            console.log(id),
             navigation.navigate("form/review/technicalReview", { id: id })
             )
           }

@@ -26,7 +26,7 @@ const technical = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
@@ -37,7 +37,6 @@ const technical = () => {
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         }
-        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
@@ -67,7 +66,6 @@ const technical = () => {
       Alert.alert("Error", "You must agree to the terms and conditions to proceed.");
       return;
     }
-    console.log(id)
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };

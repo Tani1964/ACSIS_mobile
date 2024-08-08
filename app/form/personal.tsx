@@ -36,7 +36,6 @@ const Personal = () => {
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         }
-        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
@@ -69,7 +68,7 @@ const Personal = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
@@ -98,29 +97,11 @@ const Personal = () => {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
-      console.log(formData);
-      console.log(headers);
       const response = await axi.post("/pitch/initiate-pitch", formData, {
         headers
       });
       const pitchId = response.data.pitch.id
-      console.log(pitchId)
       Alert.alert("Success", "Your personal information has been saved.");
-
-      // const result = axi.get("/pitch/get-pitch", { headers }).then((res) => {
-      //   const data = res.data.pitch.personal_information;
-      //   setFormData({
-      //     fullName: data.fullName,
-      //     email: data.email,
-      //     phoneNumber: data.phoneNumber,
-      //     dateOfBirth: data.dateOfBirth,
-      //     nationality: data.nationality,
-      //     ethnicity: data.ethnicity,
-      //     requiresDisabilitySupport: data.requiresDisabilitySupport,
-      //     disabilityInfo: data.disabilityInfo,
-      //   });
-      // });
-      console.log(id);
 
       navigation.navigate("form/proffesional", { id: pitchId });
     } catch (error) {

@@ -9,7 +9,7 @@ const SubmittedScreen = () => {
   const { authState } = useAuth();
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
@@ -20,7 +20,6 @@ const SubmittedScreen = () => {
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         }
-        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }

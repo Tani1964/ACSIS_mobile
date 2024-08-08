@@ -30,10 +30,9 @@ const ProfessionalReview = () => {
   const { id } = route.params;
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
-
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -41,7 +40,6 @@ const ProfessionalReview = () => {
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         }
-        console.log("Authentication status successfully.");
       } catch (error) {
         console.error(error);
       }
@@ -52,7 +50,6 @@ const ProfessionalReview = () => {
         headers,
       });
       setData(response.data.pitch.professional_background);
-      console.log(response);
     };
     checkAuth();
     getData();
@@ -61,9 +58,7 @@ const ProfessionalReview = () => {
   return (
     <View style={styles.container}>
       <View style={{ display: "flex" }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={24} color="black" />
-        </TouchableOpacity>
+       
         <Text style={styles.header}>Professional Background</Text>
       </View>
       <ScrollView>
@@ -95,7 +90,7 @@ const ProfessionalReview = () => {
       <View style={styles.actionButtonContainer}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() =>(console.log(id),
+          onPress={() =>(
             navigation.navigate("form/review/competitionreview", { id: id })
           )
           }

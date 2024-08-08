@@ -22,7 +22,7 @@ const CreateNew = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
@@ -39,13 +39,11 @@ const CreateNew = () => {
     }
 
     try {
-      // console.log(email)
       const response = await axi.patch(`/user/password/update-user-password`, {
         email: email,
         newPassword: formData.newPassword,
         verificationCode: formData.verificationCode,
       });
-      console.log(response);
       navigation.navigate("auth/forgotPassword/success");
     } catch (error) {
       console.error(error);
@@ -56,13 +54,7 @@ const CreateNew = () => {
     <SafeAreaView>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color="black"
-            style={styles.backIcon}
-            onPress={() => navigation.goBack()}
-          />
+          
           <Text style={styles.headerTitle}>Create a new password</Text>
           <Text style={styles.headerSubtitle}>
             Create a new password. You’ll need this password to log into your

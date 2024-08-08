@@ -24,7 +24,7 @@ const TechnicalReview = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
@@ -53,8 +53,7 @@ const TechnicalReview = () => {
 
         const headers = { Authorization: `Bearer ${token}` };
         const response = await axi.get(`/pitch/get-pitch/${id}`, { headers });
-        setData(response.data.pitch.technical_agreement); // Uncommented this line
-        console.log("hhhh", response.data.pitch.technical_agreement);
+        setData(response.data.pitch.technical_agreement);
       } catch (error) {
         console.error(error);
       }
@@ -78,10 +77,7 @@ const TechnicalReview = () => {
       }
 
       const headers = { Authorization: `Bearer ${token}` };
-      console.log(headers);
-      console.log(id);
       await axi.post(`/pitch/submit-pitch/${id}`, {});
-      await console.log(`/pitch/submit-pitch/${id}`, { headers });
       navigation.navigate("form/review/submittion");
     } catch (error) {
       console.error(error);
@@ -94,9 +90,7 @@ const TechnicalReview = () => {
   return (
     <View style={styles.container}>
       <View style={{ display: "flex" }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={24} color="black" />
-        </TouchableOpacity>
+        
         <Text style={styles.header}>Technical Questions</Text>
       </View>
       <ScrollView>
@@ -112,7 +106,9 @@ const TechnicalReview = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{data.have_current_investors?"Yes": "No"}</Text>
+          <Text style={styles.infoValue}>
+            {data.have_current_investors ? "Yes" : "No"}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -126,7 +122,9 @@ const TechnicalReview = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{data.have_current_employees?"Yes": "No"}</Text>
+          <Text style={styles.infoValue}>
+            {data.have_current_employees ? "Yes" : "No"}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -141,9 +139,7 @@ const TechnicalReview = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>
-            {data.have_debts?"Yes": "No"}
-          </Text>
+          <Text style={styles.infoValue}>{data.have_debts ? "Yes" : "No"}</Text>
         </View>
       </ScrollView>
       <View style={styles.actionButtonContainer}>

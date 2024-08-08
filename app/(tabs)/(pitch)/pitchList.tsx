@@ -34,6 +34,7 @@ const PitchList = () => {
         (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
       );
       setData(sortedData);
+      console.log("Data fetched successfully:", sortedData);
     } catch (error) {
       console.error("Error fetching data:", error);
       // Alert.alert("Error", "Failed to fetch pitch data.");

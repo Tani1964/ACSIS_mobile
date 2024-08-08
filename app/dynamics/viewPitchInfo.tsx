@@ -27,7 +27,6 @@ const ViewPitch = () => {
         if (!auth) {
           navigation.navigate('auth/mainAuth/signin');
         }
-        console.log('Authentication status successfully checked.');
       } catch (error) {
         console.error('Authentication check error:', error);
       }
@@ -38,7 +37,6 @@ const ViewPitch = () => {
         const headers = { Authorization: `Bearer ${authState.token}` };
         const response = await axi.get(`/pitch/get-pitch/${itemId}`, { headers });
         setPitch(response.data.pitch);
-        console.log('Pitch data:', response.data.pitch);
       } catch (error) {
         console.error('Error fetching pitch data:', error);
       } finally {
@@ -80,6 +78,7 @@ const ViewPitch = () => {
         <Text style={styles.label}>Phone Number: </Text><Text style={styles.value}>{pitch.personal_information?.phone_number}</Text>
         <Text style={styles.label}>Nationality: </Text><Text style={styles.value}>{pitch.personal_information?.nationality}</Text>
         <Text style={styles.label}>Ethnicity: </Text><Text style={styles.value}>{pitch.personal_information?.ethnicity}</Text>
+        <Text style={styles.label}>Gender: </Text><Text style={styles.value}>{pitch.personal_information?.gender}</Text>
       </View>
 
       <View style={styles.section}>

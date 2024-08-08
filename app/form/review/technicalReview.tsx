@@ -4,7 +4,8 @@ import { Link } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
-  ActivityIndicator, Alert,
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,7 +22,7 @@ const TechnicalReview = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerShown: false,
+      headerTitle: "",
     });
   }, [navigation]);
 
@@ -48,10 +49,12 @@ const TechnicalReview = () => {
           return;
         }
 
-        const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
+        const headers = {
+          Authorization: `Bearer ${authState.token}`,
+          "ngrok-skip-browser-warning": "true",
+        };
         const response = await axi.get(`/pitch/get-pitch/${id}`, { headers });
-        setData(response.data.pitch.technical_agreement); // Uncommented this line
-        console.log("hhhh", response.data.pitch.technical_agreement);
+        setData(response.data.pitch.technical_agreement);
       } catch (error) {
         console.error(error);
       }
@@ -61,17 +64,19 @@ const TechnicalReview = () => {
   }, [authState, id, navigation]);
 
   const submitHandler = async () => {
-    console.log(id)
     setLoading(true);
     try {
-      console.log(route);
-      console.log(authState.token);
-      const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
-      
-      console.log(`/pitch/submit-pitch/${id}`, { headers})
-      const response = await axi.post(`/pitch/submit-pitch/${id}`, {}, {
-        headers,
-      });
+      const headers = {
+        Authorization: `Bearer ${authState.token}`,
+        "ngrok-skip-browser-warning": "true",
+      };
+      const response = await axi.post(
+        `/pitch/submit-pitch/${id}`,
+        {},
+        {
+          headers,
+        }
+      );
       Alert.alert("Success", "Your application has been submitted.");
       navigation.navigate("form/review/submittion");
     } catch (error) {
@@ -88,9 +93,7 @@ const TechnicalReview = () => {
   return (
     <View style={styles.container}>
       <View style={{ display: "flex" }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={24} color="black" />
-        </TouchableOpacity>
+        
         <Text style={styles.header}>Technical Questions</Text>
       </View>
       <ScrollView>
@@ -106,7 +109,9 @@ const TechnicalReview = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{data.have_current_investors?"Yes": "No"}</Text>
+          <Text style={styles.infoValue}>
+            {data.have_current_investors ? "Yes" : "No"}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -120,7 +125,9 @@ const TechnicalReview = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>{data.have_current_employees?"Yes": "No"}</Text>
+          <Text style={styles.infoValue}>
+            {data.have_current_employees ? "Yes" : "No"}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -135,9 +142,7 @@ const TechnicalReview = () => {
               </Link>
             </View>
           </View>
-          <Text style={styles.infoValue}>
-            {data.have_debts?"Yes": "No"}
-          </Text>
+          <Text style={styles.infoValue}>{data.have_debts ? "Yes" : "No"}</Text>
         </View>
       </ScrollView>
       <View style={styles.actionButtonContainer}>

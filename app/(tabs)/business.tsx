@@ -5,7 +5,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Image,
   Alert,
   ActivityIndicator,
   RefreshControl,
@@ -16,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
 import { useAuth } from "../context/AuthContext";
-import Header from '../../components/header';
+import Header from "../../components/header";
 
 const Business = () => {
   const navigation = useNavigation();
@@ -32,7 +31,6 @@ const Business = () => {
     proposedMeetingEnd: "",
   });
   const [selectedBusiness, setSelectedBusiness] = useState(null);
-
 
   const fetchData = async () => {
     try {
@@ -142,30 +140,25 @@ const Business = () => {
     } catch (error) {
       console.log("Error scheduling meeting:", error);
       const statusCode = error.response.status;
-      if(statusCode === 401){
-        Alert.alert("Can't schedule a meeting","Please sign in to schedule a meeting")
-      }else{
-      Alert.alert(
-        "Error",
-        "An error occurred while scheduling the meeting. Please try again."
-      );
-    }}
+      if (statusCode === 401) {
+        Alert.alert(
+          "Can't schedule a meeting",
+          "Please sign in to schedule a meeting"
+        );
+      } else {
+        Alert.alert(
+          "Error",
+          "An error occurred while scheduling the meeting. Please try again."
+        );
+      }
+    }
   };
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={styles.loadingContainer}>
         <Header />
         <ActivityIndicator size="large" color="#196100" />
-      </View>
-    );
-  }
-
-  if (filteredData.length === 0) {
-    return (
-      <View style={styles.container}>
-        <Header />
-        <Text style={styles.emptyText}>No businesses found.</Text>
       </View>
     );
   }
@@ -179,39 +172,37 @@ const Business = () => {
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {filteredData.map((item) => (
-          <View key={item.id} style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="business-sharp" size={24} color="white" />
+      {filteredData.length === 0 ? (
+        <Text style={styles.emptyText}>No businesses found.</Text>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {filteredData.map((item) => (
+            <View key={item.id} style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.iconContainer}>
+                  <Ionicons name="business-sharp" size={24} color="white" />
+                </View>
+                <Text style={styles.companyName}>
+                  {item.business_name || "Unknown"}
+                </Text>
               </View>
-              <Text style={styles.companyName}>
-                {item.business_name || "Unknown"}
-              </Text>
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => openScheduleModal(item)}
+                >
+                  <Text style={styles.buttonText}>Create Meeting Proposal</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            {/* <Text style={styles.description}>
-              Date Created: {formatDateTime(item.created_at)}
-            </Text>
-            <Text style={styles.description}>
-              Last Updated: {formatDateTime(item.updated_at)}
-            </Text> */}
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => openScheduleModal(item)}
-              >
-                <Text style={styles.buttonText}>Create Meeting Proposal</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+          ))}
+        </ScrollView>
+      )}
 
       <Modal
         visible={modalVisible}
@@ -224,34 +215,13 @@ const Business = () => {
             <Text style={styles.modalTitle}>Create a Proposal</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Meeting Description"
+              placeholder="Describe Reason for Meeting ..."
               value={meetingDetails.description}
               onChangeText={(text) =>
                 setMeetingDetails((prev) => ({ ...prev, description: text }))
               }
             />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Start Time (YYYY-MM-DD HH:MM)"
-              value={meetingDetails.proposedMeetingStart}
-              onChangeText={(text) =>
-                setMeetingDetails((prev) => ({
-                  ...prev,
-                  proposedMeetingStart: text,
-                }))
-              }
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="End Time (YYYY-MM-DD HH:MM)"
-              value={meetingDetails.proposedMeetingEnd}
-              onChangeText={(text) =>
-                setMeetingDetails((prev) => ({
-                  ...prev,
-                  proposedMeetingEnd: text,
-                }))
-              }
-            />
+
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.modalButton}
@@ -279,8 +249,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f8f8",
-    // paddingTop: 20,
-    paddingBottom: 90,
   },
   scrollView: {
     paddingHorizontal: 10,
@@ -330,12 +298,6 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 5,
   },
-  businessImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
   actionButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -359,15 +321,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#f8f8f8",
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f8f8f8",
-  },
   emptyText: {
     fontSize: 18,
     color: "#666",
+    textAlign: "center",
+    marginTop: 20,
   },
   modalOverlay: {
     flex: 1,
