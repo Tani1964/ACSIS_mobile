@@ -38,6 +38,7 @@ const Events = () => {
     try {
       const response = await axi.get("/event/get-all-events");
       setEvents(response.data);
+      
     } catch (error) {
       console.error("Error fetching events:", error);
       handleFetchError(error);
@@ -162,6 +163,7 @@ const Events = () => {
         ) : (
           filteredEvents.map((event) => (
             <View key={event.id} style={styles.card}>
+              {console.log(event)}
               <View style={styles.cardHeader}>
                 <Text style={styles.eventName}>
                   {event.title || "Unnamed Event"}

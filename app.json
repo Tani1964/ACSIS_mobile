@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ACSIS",
-    "slug": "ACSIS",
+    "slug": "acsis",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -27,7 +27,7 @@
       "bundleIdentifier": "com.tani1964.ACSIS"
     },
     "android": {
-      "package":"acsis.mobile",
+      "package": "acsis.mobile",
       "versionCode": 1,
       "packages": "com.acsis.googleauthexporeactnative",
       "adaptiveIcon": {
@@ -68,8 +68,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "83c7b800-c4ad-4f87-9504-19ac3830aa11"
+        "projectId": "27c1f304-6246-4f10-a9d3-9f79425eed02"
       }
-    }
+    },
+    "owner": "tani1964"
   }
 }

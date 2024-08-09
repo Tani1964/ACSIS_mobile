@@ -13,7 +13,6 @@ import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { axi } from "../context/AuthContext";
 
 const FullView = () => {
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -35,21 +34,24 @@ const FullView = () => {
     });
   }, [navigation]);
 
-  Location.setGoogleApiKey("AIzaSyCWDZCZ1ewtuTm5hl2euGj0mrMn-F0DJIw");
-
-
   const getPermissions = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
+    const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("Permission to access location was denied");
       setLoading(false);
-      return;
+      return false;
     }
+    return true;
+  };
 
-    let currentLocation = await Location.getCurrentPositionAsync({});
+  const getCurrentLocation = async () => {
+    const locationPermissionGranted = await getPermissions();
+    if (!locationPermissionGranted) return;
+
+    const location = await Location.getCurrentPositionAsync({});
     setCurrentLocation({
-      latitude: currentLocation.coords.latitude,
-      longitude: currentLocation.coords.longitude,
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
       latitudeDelta: LATITUDE_DELTA,
       longitudeDelta: LONGITUDE_DELTA,
     });
@@ -94,16 +96,17 @@ const FullView = () => {
   };
 
   useEffect(() => {
-    console.log(event)
+    const init = async () => {
+      await getCurrentLocation();
+      if (event && event.location) {
+        await geocode();
+      } else {
+        setLoading(false);
+      }
+    };
+
+    init();
   }, [eventID]);
-
-    if (event) {
-      getPermissions();
-    }
-
-    if (event && event.location) {
-      geocode();
-    }
 
   const formatDateTime = (dateTimeString) => {
     const date = new Date(dateTimeString);
@@ -171,19 +174,30 @@ const FullView = () => {
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Sponsors:</Text>
-            {event.sponsors
-              ? event.sponsors.map((sponsor, index) => <Text key={index}>{sponsor.name}</Text>)
-              : <Text>None</Text>}
+            {event.sponsors && event.sponsors.length > 0 ? (
+              event.sponsors.map((sponsor, index) => (
+                <Text key={index}>{sponsor.name}</Text>
+              ))
+            ) : (
+              <Text>None</Text>
+            )}
           </View>
           <View style={styles.links}>
             <Text style={styles.infoLabel}>Other Links:</Text>
-            {event.otherLinks
-              ? event.otherLinks.map((link, index) => (
-                  <TouchableOpacity key={index} onPress={() => navigation.navigate('maps/linkWeb', { link: link.url })}>
-                    <Text style={styles.linkText}>{link.title}</Text>
-                  </TouchableOpacity>
-                ))
-              : <Text>None</Text>}
+            {event.otherLinks && event.otherLinks.length > 0 ? (
+              event.otherLinks.map((link, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() =>
+                    navigation.navigate("maps/linkWeb", { link: link.url })
+                  }
+                >
+                  <Text style={styles.linkText}>{link.title}</Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text>None</Text>
+            )}
           </View>
           <View style={styles.infoColumn}>
             <Text style={styles.infoLabel}>Sponsor Images:</Text>

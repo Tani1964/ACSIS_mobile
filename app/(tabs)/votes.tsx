@@ -268,11 +268,13 @@ const Votes = () => {
     }
 
     try {
+      console.log(nominationInput)
       const headers = { Authorization: `Bearer ${authState.token}` };
       const response = await axi.get(
         `/user/get-search-by-query-string?type=business&query=${nominationInput}`,
         { headers }
       );
+      console.log(response.data.results)
       setNominationSuggestions(response.data.results || []);
     } catch (error) {
       console.error("Error fetching nomination suggestions:", error);
@@ -360,7 +362,7 @@ const Votes = () => {
               placeholder="Enter business name"
             />
             <ScrollView>
-              {nominationSuggestions.map((suggestion) => (
+              {Array.isArray(nominationSuggestions) && nominationSuggestions.map((suggestion) => (
                 <TouchableOpacity
                   key={suggestion.id}
                   onPress={() => {
@@ -369,6 +371,7 @@ const Votes = () => {
                   }}
                   style={styles.suggestionItem}
                 >
+                  <Text>kk</Text>
                   <Text>{suggestion.business_name}</Text>
                 </TouchableOpacity>
               ))}
