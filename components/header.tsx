@@ -9,16 +9,18 @@ import * as SecureStore from "expo-secure-store";
 const Header = () => {
   const [user, setUser] = useState(null);
   const [notificationsCount, setNotificationsCount] = useState(0); // State for badge count
-  const { authState } = useAuth();
+  const { authState, setAuthState } = useAuth();
 
   useEffect(() => {
     const getUser = async () => {
-      const headers = { Authorization: `Bearer ${authState.token}` };
       try {
+        const headers = { Authorization: `Bearer ${authState.token}` };
+        console.log(headers)
         const response = await axi.get("/user", { headers });
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching user:", error);
+        setAuthState({ ...authState, authenticated: false });
       }
     };
 
@@ -40,7 +42,7 @@ const Header = () => {
 
   return (
     <View style={styles.header}>
-     {user&& <View style={styles.rightIcons}>
+     {(authState.authenticated && user)&& <View style={styles.rightIcons}>
         <Link href="user/notificationsInfo">
           <View style={styles.iconContainer}>
             <Ionicons name="notifications-outline" size={37} color="lightgrey" />

@@ -43,11 +43,7 @@ const TechnicalReview = () => {
           return;
         }
 
-        const token = await SecureStore.getItemAsync("token");
-        if (!token) {
-          navigation.navigate("auth/mainAuth/signin");
-          return;
-        }
+        
 
         const headers = {
           Authorization: `Bearer ${authState.token}`,

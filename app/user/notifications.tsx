@@ -34,30 +34,38 @@ const Account = () => {
     const getUser = async () => {
       const response = await axi.get("/user")
       setUser(response.data);
+      setNotificationsEnabled(response.data.user.pitch_notification_status);
+      console.log(response.data.user.pitch_notification_status)
     };
     getUser();
-  }, [authState]);
+  }, []);
 
   const toggleNotifications = async () => {
-    const auth = await authState.authenticated;
-    if (notificationsEnabled && auth) {
-      Alert.alert("Notifications Disabled");
-    } else {
-      try {
-        const response = await axi.patch("/user/update-notification-settings", {
-          notificationStatus: !notificationsEnabled,
-          pitchNotificationStatus: !notificationsEnabled,
-          postNotificationStatus: !notificationsEnabled,
-          eventNotificationStatus: !notificationsEnabled,
-        });
-        Alert.alert(response.data.message); // Assuming response.data.message contains a success message
-      } catch (e) {
-        console.log(e);
-        Alert.alert("Error updating notification settings");
-      }
+    try {
+      console.log({
+        notificationStatus: !notificationsEnabled,
+        pitchNotificationStatus: !notificationsEnabled,
+        postNotificationStatus: !notificationsEnabled,
+        eventNotificationStatus: !notificationsEnabled,
+      })
+      const response = await axi.patch("/user/update-notification-settings", {
+        notificationStatus: !notificationsEnabled,
+        pitchNotificationStatus: !notificationsEnabled,
+        postNotificationStatus: !notificationsEnabled,
+        eventNotificationStatus: !notificationsEnabled,
+      });
+      Alert.alert(response.data.message);
+
+      // Refetch user data after update
+      const updatedUser = await axi.get("/user");
+      setNotificationsEnabled(updatedUser.data.user.pitch_notification_status);
+    } catch (e) {
+      console.log(e);
+      Alert.alert("Error updating notification settings");
     }
-    setNotificationsEnabled(!notificationsEnabled);
-  };
+  
+};
+
 
   const signOutHandler = async () => {
     await SecureStore.deleteItemAsync("authToken");

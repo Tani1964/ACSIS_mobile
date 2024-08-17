@@ -154,6 +154,9 @@ const PitchList = () => {
             <View style={styles.innerCard}>
               <View style={styles.cardHeader}>
                 <Text>{new Date(item.updated_at).toLocaleDateString()}</Text>
+                {item.uid &&<Text style={{fontWeight: "bold", fontSize:20}}>{` #${
+                item.uid || ""
+              }`}</Text>}
                 {!item.is_submitted && (
                   <AntDesign
                     name="delete"
@@ -176,6 +179,7 @@ const PitchList = () => {
                   />
                 )}
               </View>
+              
               <Text>{`"${
                 item.competition_questions?.business_name || "No Business Name"
               }..."`}</Text>
@@ -270,6 +274,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
   },
   actionButton: {

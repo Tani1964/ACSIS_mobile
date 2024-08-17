@@ -7,23 +7,30 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { axi } from "@/app/context/AuthContext";
 
 const FullView = () => {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [destination, setDestination] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [eventImages, setEventImages] = useState([]);
+  const [eventLocation, setEventLocation] = useState("");
+  const [event, setEvent] = useState({});
+  const [region, setRegion] = useState(null); // Add region state
+
   const route = useRoute();
-  const { eventID, event } = route.params;
+  const { eventID, location2 } = route.params;
 
   const { width, height } = Dimensions.get("window");
   const ASPECT_RATIO = width / height;
-  const LATITUDE_DELTA = 0.0922;
+  const LATITUDE_DELTA = 0.0922; // Adjust as needed
   const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
   const navigation = useNavigation();
@@ -38,75 +45,99 @@ const FullView = () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("Permission to access location was denied");
-      setLoading(false);
+      setMapLoading(false);
       return false;
     }
     return true;
   };
 
-  const getCurrentLocation = async () => {
-    const locationPermissionGranted = await getPermissions();
-    if (!locationPermissionGranted) return;
+  const getEvent = async () => {
+    try {
+      const response = await axi.get(`/event/get-event/${eventID}`);
+      setEvent(response.data.event);
+      console.log(response.data.event.sponsor_images_urls)
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-    const location = await Location.getCurrentPositionAsync({});
-    setCurrentLocation({
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      latitudeDelta: LATITUDE_DELTA,
-      longitudeDelta: LONGITUDE_DELTA,
-    });
+  const getCurrentLocation = async () => {
+    const permissionGranted = await getPermissions();
+    if (!permissionGranted) return;
+
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      console.log("current ", location);
+      const currentCoords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      setCurrentLocation(currentCoords);
+
+      // Set region to center on current location
+      setRegion({
+        ...currentCoords,
+        latitudeDelta: LATITUDE_DELTA,
+        longitudeDelta: LONGITUDE_DELTA,
+      });
+    } catch (error) {
+      console.error("Error getting current location:", error);
+      Alert.alert(
+        "Error",
+        "Unable to retrieve current location. Please make sure to enable Location permissions."
+      );
+    }
   };
 
   const geocode = async () => {
-    if (!event || !event.location) {
-      console.error("Event or event.location is undefined.");
-      Alert.alert(
-        "Geocoding Error",
-        "Event location is not available. Please try again later."
-      );
-      setLoading(false);
-      return;
-    }
-
     try {
-      const geocodedLocation = await Location.geocodeAsync(event.location);
+      setMapLoading(true)
+      if (!event.location && !location2) {
+        return; // Exit the function if no location is available
+      }
+
+      console.log("kkk", event.location || location2);
+
+      // Await the geocoding operation directly
+      const geocodedLocation = await Location.geocodeAsync(event.location || location2);
+      console.log("geo", geocodedLocation);
+
       if (geocodedLocation.length > 0) {
         const { latitude, longitude } = geocodedLocation[0];
-        setDestination({
-          latitude,
-          longitude,
-          title: "Venue",
-        });
-      } else {
-        console.error("No geocoded locations found.");
-        Alert.alert(
-          "Geocoding Error",
-          "No location found for the provided address. Please check the address and try again."
-        );
+        if (latitude && longitude) {
+          setDestination({
+            latitude,
+            longitude,
+          });
+          // Update region to include destination
+          setRegion({
+            latitude,
+            longitude,
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA,
+          });
+        } else {
+          Alert.alert("Geocoding Error", "Invalid coordinates returned.");
+        }
       }
     } catch (error) {
       console.error("Geocoding error:", error);
-      Alert.alert(
-        "Geocoding Error",
-        "There was an issue with geocoding the location. Please try again later."
-      );
+      Alert.alert("Geocoding Error", "Unable to geocode the location.");
     } finally {
-      setLoading(false);
+      setMapLoading(false);
     }
   };
 
   useEffect(() => {
-    const init = async () => {
-      await getCurrentLocation();
-      if (event && event.location) {
-        await geocode();
-      } else {
-        setLoading(false);
-      }
-    };
+    getEvent();
+  }, []);
 
-    init();
-  }, [eventID]);
+  useEffect(() => {
+    getCurrentLocation();
+    geocode();
+  }, [event.location]);
 
   const formatDateTime = (dateTimeString) => {
     const date = new Date(dateTimeString);
@@ -118,62 +149,59 @@ const FullView = () => {
     )}, ${date.toLocaleTimeString("en-US", timeOptions)}`;
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
-        {currentLocation ? (
-          <MapView style={styles.map} initialRegion={currentLocation}>
-            <Marker coordinate={currentLocation} title="You" />
-            {destination && (
-              <Marker coordinate={destination} title={destination.title} />
-            )}
-            {destination && (
+        <MapView
+          style={styles.map}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+          loadingEnabled={true}
+          region={region} // Set region
+        >
+          {destination && (
+            <>
+              <Marker coordinate={destination} title={"Venue"} />
               <MapViewDirections
                 origin={currentLocation}
                 destination={destination}
                 apikey="AIzaSyCWDZCZ1ewtuTm5hl2euGj0mrMn-F0DJIw"
                 strokeWidth={3}
-                strokeColor="hotpink"
+                strokeColor="green"
+                onError={(errorMessage) => {
+                  console.error("MapViewDirections error:", errorMessage);
+                  Alert.alert("Error", errorMessage);
+                }}
               />
-            )}
-          </MapView>
-        ) : (
-          <Text>Loading...</Text>
-        )}
+            </>
+          )}
+        </MapView>
       </View>
       <View style={styles.infoContainer}>
         <Text style={styles.infoTitle}>More Info</Text>
         <ScrollView style={styles.infoScroll}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Location:</Text>
-            <Text>{event.location}</Text>
+            <Text style={styles.infoLabel}>Location: </Text>
+            <Text>{event.location || "N/A"}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Title:</Text>
-            <Text>{event.title}</Text>
+            <Text style={styles.infoLabel}>Title: </Text>
+            <Text>{event.title || "N/A"}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Description:</Text>
-            <Text>{event.description}</Text>
+            <Text style={styles.infoLabel}>Description: </Text>
+            <Text>{event.description || "N/A"}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Predicted Duration:</Text>
-            <Text>{event.duration_hours} Hours</Text>
+            <Text style={styles.infoLabel}>Predicted Duration: </Text>
+            <Text>{event.duration_hours ? `${event.duration_hours} Hours` : "N/A"}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Date and Time:</Text>
-            <Text>{formatDateTime(event.date_time)}</Text>
+            <Text style={styles.infoLabel}>Date and Time: </Text>
+            <Text>{event.date_time ? formatDateTime(event.date_time) : "N/A"}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Sponsors:</Text>
+            <Text style={styles.infoLabel}>Sponsors: </Text>
             {event.sponsors && event.sponsors.length > 0 ? (
               event.sponsors.map((sponsor, index) => (
                 <Text key={index}>{sponsor.name}</Text>
@@ -183,7 +211,7 @@ const FullView = () => {
             )}
           </View>
           <View style={styles.links}>
-            <Text style={styles.infoLabel}>Other Links:</Text>
+            <Text style={styles.infoLabel}>Other Links: </Text>
             {event.otherLinks && event.otherLinks.length > 0 ? (
               event.otherLinks.map((link, index) => (
                 <TouchableOpacity
@@ -201,17 +229,19 @@ const FullView = () => {
           </View>
           <View style={styles.infoColumn}>
             <Text style={styles.infoLabel}>Sponsor Images:</Text>
-            {event.sponsor_images_refs && event.sponsor_images_refs.length > 0 ? (
-              event.sponsor_images_refs.map((imageRef, index) => (
-                <Image
-                  key={index}
-                  source={{ uri: imageRef }}
-                  style={styles.sponsorImage}
-                />
-              ))
-            ) : (
-              <Text>None</Text>
-            )}
+            <View style={{ display: "flex", flexDirection: "row", gap: 10 }}>
+              {event.sponsor_images_urls && event.sponsor_images_urls.length > 0 ? (
+                event.sponsor_images_urls.map((imageRef, index) => (
+                  <Image
+                    key={index}
+                    source={{ uri: imageRef }}
+                    style={styles.sponsorImage}
+                  />
+                ))
+              ) : (
+                <Text>None</Text>
+              )}
+            </View>
           </View>
         </ScrollView>
       </View>
@@ -231,6 +261,8 @@ const styles = StyleSheet.create({
   },
   mapContainer: {
     height: "60%",
+    justifyContent: "center",
+    alignItems: "center",
   },
   infoContainer: {
     paddingHorizontal: 4,
@@ -243,6 +275,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 10,
+    paddingBottom: 150,
   },
   infoTitle: {
     textAlign: "center",
@@ -255,33 +288,23 @@ const styles = StyleSheet.create({
     height: "40%",
   },
   infoRow: {
+    marginVertical: 4,
     flexDirection: "row",
-    gap: 3,
-    marginBottom: 5,
   },
   infoLabel: {
     fontWeight: "bold",
   },
   infoColumn: {
-    flexDirection: "column",
-    gap: 3,
-  },
-  linkText: {
-    color: "green",
+    marginVertical: 4,
   },
   links: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    marginVertical: 4,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  linkText: {
+    color: "blue",
   },
   sponsorImage: {
-    width: 100,
-    height: 100,
-    resizeMode: "cover",
-    margin: 5,
+    width: 70,
+    height: 50,
   },
 });

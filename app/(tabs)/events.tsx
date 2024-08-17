@@ -38,7 +38,6 @@ const Events = () => {
     try {
       const response = await axi.get("/event/get-all-events");
       setEvents(response.data);
-      
     } catch (error) {
       console.error("Error fetching events:", error);
       handleFetchError(error);
@@ -115,7 +114,12 @@ const Events = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View
+        style={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <Header />
         <ActivityIndicator size="large" color="#196100" />
       </View>
@@ -162,8 +166,13 @@ const Events = () => {
           <Text style={styles.emptyText}>No events found.</Text>
         ) : (
           filteredEvents.map((event) => (
-            <View key={event.id} style={styles.card}>
-              {console.log(event)}
+            <View
+              key={event.id}
+              style={styles.card}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            >
               <View style={styles.cardHeader}>
                 <Text style={styles.eventName}>
                   {event.title || "Unnamed Event"}
@@ -177,15 +186,15 @@ const Events = () => {
                 Expected duration: {event.duration_hours} hours
               </Text>
               <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate("maps/fullView", {
-                    eventID: event.id,
-                    event: event,
-                  })
-                }
+                // onPress={() =>
+                //   navigation.navigate("maps/fullView", {
+                //     location2: event.location,
+                //     eventID: event.id,
+                //   })
+                // }
               >
                 <Image
-                  source={event.image_ref}
+                  source={{ uri: event.image_url }}
                   style={styles.eventImage}
                   resizeMode="cover"
                 />
@@ -216,7 +225,7 @@ const Events = () => {
                   onPress={() =>
                     navigation.navigate("maps/fullView", {
                       eventID: event.id,
-                      event: event,
+                      location2: event.location,
                     })
                   }
                 >

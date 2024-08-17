@@ -12,7 +12,6 @@ const SubmittedScreen = () => {
     });
   }, [navigation]);
   return (
-    <SafeAreaView>
     <View style={styles.container}>
       <View style={styles.contentContainer}>
         <Image source={require('../../../assets/images/successful.png')} style={styles.image} />
@@ -22,7 +21,7 @@ const SubmittedScreen = () => {
         </Text>
       </View>
       <ActionButton text="Proceed to sign in" link="/" style={styles.button} />
-    </View></SafeAreaView>
+    </View>
   )
 }
 

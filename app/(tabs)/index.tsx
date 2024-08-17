@@ -1,12 +1,12 @@
-import { View, Text, StyleSheet, ActivityIndicator, Alert,RefreshControl, } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, RefreshControl, ScrollView } from 'react-native';
 import React, { useState } from 'react';
 import Header from '../../components/header';
 import { WebView } from 'react-native-webview';
 
-
 const Home = () => {
   const [hasError, setHasError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [key, setKey] = useState(0); // To force reload of WebView
 
   const handleError = (syntheticEvent) => {
     setHasError(true);
@@ -19,31 +19,35 @@ const Home = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchData().then(() => {
-      setRefreshing(false); // Stop refreshing after data is fetched
-    });
+    setKey(prevKey => prevKey + 1); // Change the key to force reload
+    setHasError(false); // Reset the error state
+    setRefreshing(false); // Stop refreshing after reloading
   };
 
   return (
-    <View style={styles.container} refreshControl={
-      <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-    }>
+    <View style={styles.container}>
       <Header />
-      <View style={styles.content}>
-        {hasError ? (
+      <ScrollView 
+        contentContainerStyle={styles.content} 
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* {hasError ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>Failed to load content.</Text>
           </View>
         ) : (
           <WebView
+            key={key}
             source={{ uri: 'https://widgets.sociablekit.com/linkedin-page-posts/iframe/25427584' }} // Replace with your desired URL
             style={styles.webview}
             startInLoadingState={true}
-            renderLoading={() => <ActivityIndicator color="blue" size="large" style={styles.loadingIndicator} />}
+            renderLoading={() => <ActivityIndicator color="#196100" size="large" style={styles.loadingIndicator} />}
             onError={handleError}
           />
-        )}
-      </View>
+        )} */}
+      </ScrollView>
     </View>
   );
 }
@@ -53,7 +57,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
+    flexGrow: 1, // Ensure content stretches to fill the ScrollView
   },
   loadingIndicator: {
     position: 'absolute',
@@ -63,6 +67,7 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+    height: 400, // Ensure the WebView has a defined height
   },
   errorContainer: {
     flex: 1,

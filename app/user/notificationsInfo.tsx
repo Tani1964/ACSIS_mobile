@@ -25,6 +25,20 @@ const NotificationsInfo = () => {
     });
   }, [navigation]);
 
+  const checkAuth = async () => {
+    try {
+      const auth = await authState.authenticated;
+      if (!auth) {
+        navigation.navigate('auth/mainAuth/signin');
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Authentication check error:', error);
+      return false;
+    }
+  };
+
   const handleApiError = (error) => {
     if (error.response) {
       switch (error.response.status) {
@@ -49,6 +63,9 @@ const NotificationsInfo = () => {
 
   const fetchNotifications = async () => {
     setLoading(true);
+    const isAuthenticated = await checkAuth();
+    if (!isAuthenticated) return;
+
     try {
       const headers = { Authorization: `Bearer ${authState.token}` };
       const params = { filter: dateFilter };

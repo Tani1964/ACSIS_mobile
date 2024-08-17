@@ -20,7 +20,7 @@ export const useAuth = () => {
 
 // Define axios instance outside of the component
 export const axi = axios.create({
-  baseURL: "http://ec2-16-170-223-254.eu-north-1.compute.amazonaws.com/api/v1",
+  baseURL: "https://africancaribbeansummit.xyz/api/v1/",
 });
 
 export const AuthProvider: React.FC = ({ children }) => {

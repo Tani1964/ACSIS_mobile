@@ -116,7 +116,7 @@ const Technical = () => {
         { headers }
       );
       Alert.alert("Success", "Your competition information has been saved.");
-      navigation.navigate("form/review/personalreview", { id });
+      navigation.navigate("updateform/review/personalreview", { id });
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {

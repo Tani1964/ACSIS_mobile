@@ -24,7 +24,7 @@ const linkWeb = () => {
           startInLoadingState={true}
           renderLoading={() => (
             <ActivityIndicator
-              color="blue"
+              color="green"
               size="large"
               style={styles.loadingIndicator}
             />

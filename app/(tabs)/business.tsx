@@ -11,7 +11,7 @@ import {
   TextInput,
   Modal,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
 import { useAuth } from "../context/AuthContext";
@@ -156,7 +156,7 @@ const Business = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={styles.container}>
         <Header />
         <ActivityIndicator size="large" color="#196100" />
       </View>
@@ -190,6 +190,22 @@ const Business = () => {
                 <Text style={styles.companyName}>
                   {item.business_name || "Unknown"}
                 </Text>
+              </View>
+              <View>
+              <View style={styles.detailRow}>
+                  <MaterialIcons name="description" size={20} color="#196100" />
+                  <Text style={styles.detailText}>{item.business_description}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <MaterialIcons name="person" size={20} color="#196100" />
+                  <Text style={styles.detailText}>{item.business_owner_name}</Text>
+                </View>
+                <TouchableOpacity style={styles.detailRow} onPress={() =>
+                    navigation.navigate("maps/linkWeb", { link: item.website })
+                  }>
+                  <MaterialIcons name="language" size={20} color="#196100" />
+                  <Text style={styles.detailText}>{item.website}</Text>
+                </TouchableOpacity>
               </View>
               <View style={styles.actionButtons}>
                 <TouchableOpacity
@@ -249,6 +265,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f8f8",
+    paddingBottom: 100
   },
   scrollView: {
     paddingHorizontal: 10,
@@ -299,6 +316,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   actionButtons: {
+    marginTop:8,
     flexDirection: "row",
     justifyContent: "space-between",
   },
@@ -371,5 +389,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     textAlign: "center",
+  }, detailsContainer: {
+    marginBottom: 10,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  detailText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: "#333",
   },
 });

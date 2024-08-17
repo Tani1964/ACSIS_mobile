@@ -9,11 +9,10 @@ import {
 } from "react-native";
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
-import { useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRoute } from "@react-navigation/native";
 
 const CreateNew = () => {
   const route = useRoute();
@@ -34,7 +33,12 @@ const CreateNew = () => {
 
   const submit = async () => {
     if (formData.newPassword !== formData.confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      Alert.alert("Error", "Passwords do not match.");
+      return;
+    }
+
+    if (!formData.newPassword || !formData.confirmPassword || !formData.verificationCode) {
+      Alert.alert("Error", "All fields are required.");
       return;
     }
 
@@ -44,9 +48,43 @@ const CreateNew = () => {
         newPassword: formData.newPassword,
         verificationCode: formData.verificationCode,
       });
-      navigation.navigate("auth/forgotPassword/success");
+
+      if (response.status === 200) {
+        navigation.navigate("auth/forgotPassword/success");
+      } else {
+        Alert.alert("Error", "Unexpected response from the server.");
+      }
     } catch (error) {
-      console.error(error);
+      if (error.response) {
+        const statusCode = error.response.status;
+        const errorMessage =
+          (error.response.data && error.response.data.message) || "An unexpected error occurred.";
+
+        switch (statusCode) {
+          case 400:
+          case 422:
+            Alert.alert("Error", errorMessage || "Invalid input. Please check your data.");
+            break;
+          case 401:
+            Alert.alert("Error", errorMessage || "Unauthorized access. Please check your credentials.");
+            break;
+          case 403:
+            Alert.alert("Error", errorMessage || "Access forbidden. Please contact support.");
+            break;
+          case 404:
+            Alert.alert("Error", errorMessage || "User not found.");
+            break;
+          default:
+            Alert.alert("Error", errorMessage || "An unexpected error occurred. Please try again.");
+            break;
+        }
+      } else if (error.request) {
+        Alert.alert("Error", "No response from the server. Please try again later.");
+      } else {
+        Alert.alert("Error", "Network error. Please check your internet connection.");
+      }
+
+      console.error("Password update error:", error);
     }
   };
 
@@ -54,7 +92,6 @@ const CreateNew = () => {
     <SafeAreaView>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
-          
           <Text style={styles.headerTitle}>Create a new password</Text>
           <Text style={styles.headerSubtitle}>
             Create a new password. You’ll need this password to log into your
@@ -73,7 +110,7 @@ const CreateNew = () => {
                   newPassword: newText,
                 }))
               }
-              defaultValue={formData.newPassword}
+              value={formData.newPassword}
               secureTextEntry={true}
             />
           </View>
@@ -90,7 +127,7 @@ const CreateNew = () => {
                   confirmPassword: newText,
                 }))
               }
-              defaultValue={formData.confirmPassword}
+              value={formData.confirmPassword}
               secureTextEntry={true}
             />
           </View>
@@ -106,7 +143,7 @@ const CreateNew = () => {
                   verificationCode: newText,
                 }))
               }
-              defaultValue={formData.verificationCode}
+              value={formData.verificationCode}
               secureTextEntry={true}
             />
           </View>
@@ -133,10 +170,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#FFFFFF",
-  },
-  backIcon: {
-    alignSelf: "flex-start",
-    marginBottom: 20,
   },
   headerTitle: {
     fontSize: 24,

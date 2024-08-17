@@ -46,10 +46,7 @@ const TechnicalReview = () => {
         }
 
         const token = await SecureStore.getItemAsync("token");
-        if (!token) {
-          navigation.navigate("auth/mainAuth/signin");
-          return;
-        }
+        
 
         const headers = { Authorization: `Bearer ${token}` };
         const response = await axi.get(`/pitch/get-pitch/${id}`, { headers });
@@ -70,12 +67,8 @@ const TechnicalReview = () => {
 
     try {
       setLoading(true);
+      
       const token = await SecureStore.getItemAsync("token");
-      if (!token) {
-        navigation.navigate("auth/mainAuth/signin");
-        return;
-      }
-
       const headers = { Authorization: `Bearer ${token}` };
       await axi.post(`/pitch/submit-pitch/${id}`, {});
       navigation.navigate("form/review/submittion");

@@ -9,6 +9,7 @@ import {
   TextInput,
   Alert,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import Header from "../../components/header";
 import { axi, useAuth } from "../context/AuthContext";
@@ -31,11 +32,13 @@ const Votes = () => {
   const [nominationSuggestions, setNominationSuggestions] = useState([]);
   const [nominee, setNominee] = useState(null);
 
+  const [buttonLoader, setButtonLoader] = useState(false);
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const auth = await authState.authenticated;
-        console.log(authState.token)
+        console.log(authState.token);
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         } else {
@@ -83,7 +86,10 @@ const Votes = () => {
           Alert.alert("Error", "Awards not found.");
           break;
         case 500:
-          console.log("Error", "Internal server error. Please try again later.");
+          console.log(
+            "Error",
+            "Internal server error. Please try again later."
+          );
           break;
         default:
           Alert.alert(
@@ -124,17 +130,19 @@ const Votes = () => {
       Alert.alert("Error", "Please enter a company name to nominate.");
       return;
     }
-  
+
     try {
+      setButtonLoader(true);
       const formData = {
         nomineeId: nominee.id,
-        nomineeType: "business",
+        // nomineeType: "",
         awardId: selectedAward.id,
         reason: "",
       };
-  
+      console.log(formData)
+
       await axi.post("/award/nominate-for-award", formData);
-  
+
       Alert.alert(
         "Nomination Submitted",
         `You nominated ${nominationInput} for ${selectedAward.title}`
@@ -144,8 +152,9 @@ const Votes = () => {
       setNominee(null); // Clear the selected nominee
       setNominationSuggestions([]); // Clear suggestions
     } catch (error) {
-      let message = "An error occurred while submitting your nomination. Please try again later.";
-  
+      let message =
+        "An error occurred while submitting your nomination. Please try again later.";
+
       if (error.response) {
         const statusCode = error.response.status;
         switch (statusCode) {
@@ -160,7 +169,8 @@ const Votes = () => {
             break;
           case 403:
             // Forbidden access
-            message = "Forbidden access. You do not have permission to perform this action.";
+            message =
+              "Forbidden access. You do not have permission to perform this action.";
             break;
           case 404:
             // Resource not found
@@ -186,11 +196,12 @@ const Votes = () => {
         // Error setting up request
         message = "An error occurred while setting up the request.";
       }
-  
+
       Alert.alert("Error", message);
+    } finally {
+      setButtonLoader(false);
     }
   };
-  
 
   const submitVote = async () => {
     if (!selectedCompany || !selectedAward) {
@@ -199,6 +210,7 @@ const Votes = () => {
     }
 
     try {
+      setButtonLoader(true);
       const headers = { Authorization: `Bearer ${authState.token}` };
 
       await axi.post(
@@ -231,7 +243,8 @@ const Votes = () => {
             break;
           case 403:
             // Forbidden access
-            message = "Forbidden access. You do not have permission to perform this action.";
+            message =
+              "Forbidden access. You do not have permission to perform this action.";
             break;
           case 404:
             // Resource not found
@@ -258,6 +271,7 @@ const Votes = () => {
     } finally {
       setVoteModalVisible(false);
       setSelectedCompany(null);
+      setButtonLoader(false);
     }
   };
 
@@ -268,13 +282,13 @@ const Votes = () => {
     }
 
     try {
-      console.log(nominationInput)
+      console.log(nominationInput);
       const headers = { Authorization: `Bearer ${authState.token}` };
       const response = await axi.get(
         `/user/get-search-by-query-string?type=business&query=${nominationInput}`,
         { headers }
       );
-      console.log(response.data.results)
+      console.log(response.data.results);
       setNominationSuggestions(response.data.results || []);
     } catch (error) {
       console.error("Error fetching nomination suggestions:", error);
@@ -362,25 +376,42 @@ const Votes = () => {
               placeholder="Enter business name"
             />
             <ScrollView>
-              {Array.isArray(nominationSuggestions) && nominationSuggestions.map((suggestion) => (
-                <TouchableOpacity
-                  key={suggestion.id}
-                  onPress={() => {
-                    setNominationInput(suggestion.business_name);
-                    setNominee(suggestion);
-                  }}
-                  style={styles.suggestionItem}
-                >
-                  <Text>kk</Text>
-                  <Text>{suggestion.business_name}</Text>
-                </TouchableOpacity>
-              ))}
+              {Array.isArray(nominationSuggestions) &&
+                nominationSuggestions.map((suggestion) => {
+                  const displayText =
+                    suggestion.business_name ||
+                    suggestion.full_name ||
+                    (suggestion.competition_questions &&
+                      suggestion.competition_questions.business_name);
+
+                  if (displayText) {
+                    return (
+                      <TouchableOpacity
+                        key={suggestion.id}
+                        onPress={() => {
+                          setNominationInput(displayText);
+                          setNominee(suggestion);
+                        }}
+                        style={styles.suggestionItem}
+                      >
+                        <Text>{displayText}</Text>
+                      </TouchableOpacity>
+                    );
+                  }
+
+                  return null;
+                })}
             </ScrollView>
             <TouchableOpacity
               style={styles.modalButton}
               onPress={submitNomination}
+              disabled={buttonLoader}
             >
-              <Text style={styles.modalButtonText}>Submit Nomination</Text>
+              {buttonLoader ? (
+                <ActivityIndicator size={"small"} color={"white"} />
+              ) : (
+                <Text style={styles.modalButtonText}>Submit Nomination</Text>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalButton, styles.cancelButton]}
@@ -403,7 +434,9 @@ const Votes = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Vote for {selectedAward?.title}</Text>
+            <Text style={styles.modalTitle}>
+              Vote for {selectedAward?.title}
+            </Text>
             <ScrollView>
               {selectedAward &&
                 selectedAward.nominees.map((nominee) => (
@@ -422,8 +455,16 @@ const Votes = () => {
                   </TouchableOpacity>
                 ))}
             </ScrollView>
-            <TouchableOpacity style={styles.modalButton} onPress={submitVote}>
-              <Text style={styles.modalButtonText}>Submit Vote</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={submitVote}
+              disabled={buttonLoader}
+            >
+              {buttonLoader ? (
+                <ActivityIndicator size={"small"} color={"white"} />
+              ) : (
+                <Text style={styles.modalButtonText}>Submit Vote</Text>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalButton, styles.cancelButton]}
@@ -438,10 +479,7 @@ const Votes = () => {
       <View style={styles.bottomTabContainer}>
         <TouchableOpacity
           onPress={() => setPage("votes")}
-          style={[
-            styles.bottomTab,
-            page === "votes" && styles.bottomTabActive,
-          ]}
+          style={[styles.bottomTab, page === "votes" && styles.bottomTabActive]}
         >
           <Text style={styles.bottomTabText}>Vote</Text>
         </TouchableOpacity>

@@ -87,7 +87,7 @@ const Signin = () => {
               style={styles.inputField}
               placeholder="Email address"
               onChangeText={(newText) =>
-                setFormData((prevState) => ({ ...prevState, email: newText }))
+                setFormData((prevState) => ({ ...prevState, email: newText.toLowerCase() }))
               }
               defaultValue={formData.email}
               keyboardType="email-address"
