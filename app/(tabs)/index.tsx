@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ActivityIndicator, Alert, RefreshControl, Scrol
 import React, { useState } from 'react';
 import Header from '../../components/header';
 import { WebView } from 'react-native-webview';
+import MainAdvert from '@/components/mainAdvert';
 
 const Home = () => {
   const [hasError, setHasError] = useState(false);
@@ -33,7 +34,7 @@ const Home = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* {hasError ? (
+        {hasError ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>Failed to load content.</Text>
           </View>
@@ -46,7 +47,11 @@ const Home = () => {
             renderLoading={() => <ActivityIndicator color="#196100" size="large" style={styles.loadingIndicator} />}
             onError={handleError}
           />
-        )} */}
+        )}
+        <View style={styles.sponsors}>
+          <Text style={styles.sponsorText}>Home</Text>
+          <MainAdvert/>
+        </View>
       </ScrollView>
     </View>
   );
@@ -64,6 +69,21 @@ const styles = StyleSheet.create({
     top: '50%',
     left: '50%',
     transform: [{ translateX: -25 }, { translateY: -25 }],
+  },
+  sponsors: {
+    position: 'absolute', // Absolute positioning to overlap the WebView
+    top: 0, // Adjust as needed to control the overlap position
+    left: 0,
+    right: 0,
+    height: "18%", // Adjust height as needed
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white', // Semi-transparent background to overlap but still show the WebView content
+    zIndex: 1, // Ensure it appears above the WebView
+  },
+  sponsorText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   webview: {
     flex: 1,

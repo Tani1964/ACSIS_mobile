@@ -31,6 +31,7 @@ const Votes = () => {
   const [nominations, setNominations] = useState([]);
   const [nominationSuggestions, setNominationSuggestions] = useState([]);
   const [nominee, setNominee] = useState(null);
+  const [nomineeType, setNomineeType] = useState("")
 
   const [buttonLoader, setButtonLoader] = useState(false);
 
@@ -49,7 +50,7 @@ const Votes = () => {
       }
     };
     checkAuth();
-  }, [authState.authenticated, navigation, fetchData]);
+  }, [authState, navigation, fetchData]);
 
   const fetchData = async () => {
     try {
@@ -135,7 +136,7 @@ const Votes = () => {
       setButtonLoader(true);
       const formData = {
         nomineeId: nominee.id,
-        // nomineeType: "",
+        nomineeType: nomineeType,
         awardId: selectedAward.id,
         reason: "",
       };
@@ -223,8 +224,14 @@ const Votes = () => {
       );
       Alert.alert(
         "Vote Submitted",
-        `You voted for ${selectedCompany.business_nominee.business_name}`
+        `You voted for ${
+          selectedCompany?.business_nominee?.business_name || 
+          selectedCompany?.competition_questions?.business_name || 
+          selectedCompany?.full_name || 
+          "Unknown Nominee"
+        }`
       );
+        
     } catch (error) {
       let message =
         "An error occurred while submitting your vote. Please try again later.";
@@ -391,6 +398,13 @@ const Votes = () => {
                         onPress={() => {
                           setNominationInput(displayText);
                           setNominee(suggestion);
+                          if (suggestion.business_name) {
+                            setNomineeType("business")
+                          }else if(suggestion.full_name){
+                            setNomineeType("user")}
+                          else{
+                            setNomineeType("pitch")
+                          }
                         }}
                         style={styles.suggestionItem}
                       >
@@ -451,7 +465,12 @@ const Votes = () => {
                       },
                     ]}
                   >
-                    <Text>{nominee.business_nominee.business_name}</Text>
+                    <Text>
+  {nominee?.business_nominee?.business_name || 
+   nominee?.competition_questions?.business_name || 
+   nominee?.full_name || 
+   "Unnamed Nominee"}
+</Text>
                   </TouchableOpacity>
                 ))}
             </ScrollView>
@@ -506,12 +525,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     padding: 15,
     backgroundColor: "white",
-    borderRadius: 8,
+    borderRadius: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 30 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 5,
   },
   awardHeader: {
     flexDirection: "row",
@@ -526,7 +545,7 @@ const styles = StyleSheet.create({
     backgroundColor: "green",
     paddingVertical: 5,
     paddingHorizontal: 10,
-    borderRadius: 5,
+    borderRadius: 20,
   },
   nominateButtonText: {
     color: "white",

@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontWeight: "bold",
+    width: 70
   },
   editButton: {
     flexDirection: "row",

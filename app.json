@@ -28,6 +28,11 @@
     },
     "android": {
       "package": "acsis.mobile",
+      "config":{
+        "googleMaps": {
+        "apiKey": "AIzaSyCWDZCZ1ewtuTm5hl2euGj0mrMn-F0DJIw"
+      }
+      },
       "versionCode": 1,
       "packages": "com.acsis.googleauthexporeactnative",
       "adaptiveIcon": {

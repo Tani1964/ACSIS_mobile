@@ -72,7 +72,7 @@ const Competition = () => {
 
     checkAuth();
     fetchData();
-  }, [authState, id, navigation]);
+  }, [authState.authenticated, id, navigation]);
 
   const validateForm = () => {
     return Object.values(formData).every((value) => value);
@@ -114,7 +114,7 @@ const Competition = () => {
     } finally {
       setLoading(false);
     }
-  }, [authState.token, formData, id, navigation]);
+  }, [authState.authenticated, formData, id, navigation]);
 
   const handleChange = (name, value) => {
     setFormData((prevState) => ({

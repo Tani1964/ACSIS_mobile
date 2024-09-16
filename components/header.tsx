@@ -12,6 +12,7 @@ const Header = () => {
   const { authState, setAuthState } = useAuth();
 
   useEffect(() => {
+
     const getUser = async () => {
       try {
         const headers = { Authorization: `Bearer ${authState.token}` };
@@ -19,7 +20,6 @@ const Header = () => {
         const response = await axi.get("/user", { headers });
         setUser(response.data);
       } catch (error) {
-        console.error("Error fetching user:", error);
         setAuthState({ ...authState, authenticated: false });
       }
     };
@@ -38,7 +38,7 @@ const Header = () => {
     authState.authenticated && getNotificationsCount();;
     
     
-  }, [authState.token]);
+  }, [authState.authenticated]);
 
   return (
     <View style={styles.header}>
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: {
-    width: 50,
+    width: 90,
     height: 50,
   },
   iconContainer: {

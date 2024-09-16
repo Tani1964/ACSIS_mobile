@@ -1,23 +1,23 @@
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  View,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  RefreshControl,
   TextInput,
-  Modal,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
-import { axi } from "../context/AuthContext";
-import { useAuth } from "../context/AuthContext";
 import Header from "../../components/header";
+import { axi, useAuth } from "../context/AuthContext";
 
 const Business = () => {
+  const [user, setUser] = useState(null);
   const navigation = useNavigation();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,14 +27,27 @@ const Business = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [meetingDetails, setMeetingDetails] = useState({
     description: "",
-    proposedMeetingStart: "",
-    proposedMeetingEnd: "",
+    companyProfile: "",
   });
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [selectedFilter, setSelectedFilter] = useState("");
+
+  const fetchUser = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${authState.token}` };
+      console.log(headers);
+      const res = await axi.get("/user", { headers });
+      setUser(res.data.user);
+      console.log(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const fetchData = async () => {
     try {
       const response = await axi.get(`/user/get-businesses/`);
+
       setData(response.data);
     } catch (error) {
       console.log("Error fetching data:", error);
@@ -76,7 +89,11 @@ const Business = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [selectedFilter]);
+
+  useEffect(() => {
+    authState.authenticated && fetchUser();
+  }, [authState.authenticated]);
 
   const formatDateTime = (dateTimeString) => {
     const date = new Date(dateTimeString);
@@ -113,17 +130,12 @@ const Business = () => {
     setModalVisible(false);
     setMeetingDetails({
       description: "",
-      proposedMeetingStart: "",
-      proposedMeetingEnd: "",
+      companyProfile: "",
     });
   };
 
   const scheduleHandler = async () => {
-    if (
-      !meetingDetails.description
-      // !meetingDetails.proposedMeetingStart ||
-      // !meetingDetails.proposedMeetingEnd
-    ) {
+    if (!meetingDetails.description || !meetingDetails.companyProfile) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
@@ -132,8 +144,7 @@ const Business = () => {
       const response = await axi.post("/user/schedule-meeting", {
         description: meetingDetails.description,
         recipientId: selectedBusiness.id,
-        // proposedMeetingStart: meetingDetails.proposedMeetingStart,
-        // proposedMeetingEnd: meetingDetails.proposedMeetingEnd,
+        companyProfile: meetingDetails.companyProfile,
       });
       Alert.alert("Success", "Meeting scheduled successfully!");
       closeScheduleModal();
@@ -181,42 +192,98 @@ const Business = () => {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {filteredData.map((item) => (
-            <View key={item.id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="business-sharp" size={24} color="white" />
-                </View>
-                <Text style={styles.companyName}>
-                  {item.business_name || "Unknown"}
-                </Text>
-              </View>
-              <View>
-              <View style={styles.detailRow}>
-                  <MaterialIcons name="description" size={20} color="#196100" />
-                  <Text style={styles.detailText}>{item.business_description}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <MaterialIcons name="person" size={20} color="#196100" />
-                  <Text style={styles.detailText}>{item.business_owner_name}</Text>
-                </View>
-                <TouchableOpacity style={styles.detailRow} onPress={() =>
-                    navigation.navigate("maps/linkWeb", { link: item.website })
-                  }>
-                  <MaterialIcons name="language" size={20} color="#196100" />
-                  <Text style={styles.detailText}>{item.website}</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={() => openScheduleModal(item)}
-                >
-                  <Text style={styles.buttonText}>Create Meeting Proposal</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+          {authState.authenticated &&( <View style={styles.filterContainer}>
+          {["", "Scheduled", "Open"].map((mode) => (
+            <TouchableOpacity
+              key={mode}
+              style={[
+                styles.filterButton,
+                selectedFilter === mode && styles.filterButtonActive,
+              ]}
+              onPress={() => setSelectedFilter(mode)}
+            >
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  selectedFilter === mode && styles.filterButtonTextActive,
+                ]}
+              >
+                {mode || "All Meetings"}
+              </Text>
+            </TouchableOpacity>
           ))}
+        </View>)}
+          {filteredData.map((item) => {
+            let isUserInBusiness = item.received_meetings.some(
+              (meeting) => meeting.proposer.full_name === user?.full_name
+            );
+            !authState.authenticated && (isUserInBusiness = false)
+
+            if (
+              (selectedFilter.toLowerCase() === "scheduled" && !isUserInBusiness) ||
+              (selectedFilter.toLowerCase() === "open" && isUserInBusiness)
+            ) {
+              return null; // Return null instead of an empty string to avoid React warnings
+            }
+          
+
+            return (
+              <View key={item.id} style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.iconContainer}>
+                    <Ionicons name="business-sharp" size={24} color="white" />
+                  </View>
+                  <Text style={styles.companyName}>
+                    {item.business_name || "Unknown"}
+                  </Text>
+                </View>
+                <View>
+                  <View style={styles.detailRow}>
+                    <MaterialIcons
+                      name="description"
+                      size={20}
+                      color="#196100"
+                    />
+                    <Text style={styles.detailText}>
+                      {item.business_description}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <MaterialIcons name="person" size={20} color="#196100" />
+                    <Text style={styles.detailText}>
+                      {item.business_owner_name}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.detailRow}
+                    onPress={() =>
+                      navigation.navigate("maps/linkWeb", {
+                        link: item.website,
+                      })
+                    }
+                  >
+                    <MaterialIcons name="language" size={20} color="#196100" />
+                    <Text style={styles.detailText}>{item.website}</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.actionButtons}>
+                  {!isUserInBusiness && (
+                    <TouchableOpacity
+                      style={styles.button}
+                      onPress={() => openScheduleModal(item)}
+                    >
+                      <Text style={styles.buttonText}>
+                        Create Meeting Proposal
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {isUserInBusiness && (
+                    <Text style={styles.scheduledText}>Meeting Scheduled</Text>
+                  )}
+                </View>
+              </View>
+            );
+          })}
         </ScrollView>
       )}
 
@@ -229,14 +296,33 @@ const Business = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Create a Proposal</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Describe Reason for Meeting ..."
-              value={meetingDetails.description}
-              onChangeText={(text) =>
-                setMeetingDetails((prev) => ({ ...prev, description: text }))
-              }
-            />
+            <View>
+              <Text>What is your company profile?</Text>
+              <TextInput
+                style={styles.modalInput}
+                multiline
+                numberOfLines={8}
+                placeholder="Write your company profile ..."
+                value={meetingDetails.companyProfile}
+                onChangeText={(text) =>
+                  setMeetingDetails((prev) => ({
+                    ...prev,
+                    companyProfile: text,
+                  }))
+                }
+              />
+            </View>
+            <View>
+              <Text>Write the proposal for the Meeting </Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Describe Reason for Meeting ..."
+                value={meetingDetails.description}
+                onChangeText={(text) =>
+                  setMeetingDetails((prev) => ({ ...prev, description: text }))
+                }
+              />
+            </View>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -265,7 +351,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f8f8",
-    paddingBottom: 100
+    paddingBottom: 100,
   },
   scrollView: {
     paddingHorizontal: 10,
@@ -279,16 +365,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 4,
   },
+  filterContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    gap: 20,
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  filterButton: {
+    paddingVertical: 8,
+    borderRadius: 5,
+    width: "25%",
+    backgroundColor: "#e0e0e0",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  filterButtonActive: {
+    backgroundColor: "#196100",
+  },
+  filterButtonText: {
+    color: "#333",
+  },
+  filterButtonTextActive: {
+    color: "white",
+  },
   card: {
     backgroundColor: "white",
-    borderRadius: 10,
-    padding: 15,
+    borderRadius: 60,
+    padding: 25,
     marginVertical: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 30 },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
-    elevation: 2,
+    elevation: 5,
   },
   cardHeader: {
     flexDirection: "row",
@@ -316,16 +427,19 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   actionButtons: {
-    marginTop:8,
+    marginTop: 8,
+    display:"flex",
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    width: "100%"
   },
   button: {
     backgroundColor: "#196100",
     paddingVertical: 10,
     paddingHorizontal: 15,
-    borderRadius: 5,
-    width: "100%",
+    borderRadius: 20,
+    width: "90%",
+    alignSelf:"center"
   },
   buttonText: {
     color: "white",
@@ -363,8 +477,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
   },
+  textArea: {
+    width: "120%",
+    height: "auto",
+    borderColor: "#ccc",
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
   modalInput: {
-    width: "100%",
+    width: "120%",
     height: 40,
     borderColor: "#ccc",
     borderWidth: 1,
@@ -389,7 +512,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     textAlign: "center",
-  }, detailsContainer: {
+  },
+  detailsContainer: {
     marginBottom: 10,
   },
   detailRow: {

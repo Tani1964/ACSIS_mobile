@@ -41,7 +41,7 @@ const PitchList = () => {
     } finally {
       setLoading(false);
     }
-  }, [authState.token]);
+  }, [authState.authenticated]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -99,7 +99,7 @@ const PitchList = () => {
       <View style={styles.body}>
         <View style={styles.imageContainer}>
           <Image
-            source={require("../../../assets/images/PNG File 1.png")}
+            source={require("../../../assets/images/pitch.png")}
             style={styles.image}
           />
           <View style={styles.textContainer}>
@@ -299,6 +299,7 @@ const styles = StyleSheet.create({
   createButtonContainer: {
     padding: 20,
     backgroundColor: "white",
+    marginBottom: 10
   },
   createButton: {
     backgroundColor: "#196100",

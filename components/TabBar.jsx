@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { AntDesign, Ionicons, FontAwesome5, MaterialIcons, Feather } from '@expo/vector-icons';
+import { AntDesign, Ionicons, FontAwesome5, MaterialIcons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "@/app/context/AuthContext";
 
@@ -22,11 +22,11 @@ const TabBar = ({ state, descriptors, navigation }) => {
         "(pitch)/index": (props) => <Ionicons name="bulb" size={24} color={props.color} {...props} />,
         "(pitch)/pitchList": (props) => <Ionicons name="bulb" size={24} color={props.color} {...props} />,
         business: (props) => <Ionicons name="business-sharp" size={24} color={props.color} {...props} />,
-        votes: (props) => <MaterialIcons name="how-to-vote" size={24} color={props.color} {...props} />,
+        votes: (props) => <MaterialCommunityIcons name="trophy-award" size={24} color={props.color} {...props} />,
     };
 
-    const primaryColor = "#196100";
-    const greyColor = "grey";
+    const primaryColor = "#f7981f";
+    const greyColor = "#196100";
     return (
         <View style={styles.tabbar}>
             {state.routes.map((route, index) => {
@@ -89,15 +89,34 @@ const TabBar = ({ state, descriptors, navigation }) => {
 const styles = StyleSheet.create({
     tabbar: {
         position: "absolute",
-        bottom: 0,
+        bottom: 5,
+        marginLeft: 5,
+        marginRight: 5,
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
         backgroundColor: "white",
+        borderTopLeftRadius: 50, // Corrected: Use a number instead of a string
+        borderBottomLeftRadius: 50, // Corrected: Use a number instead of a string
+        borderTopRightRadius: 50,
+        borderBottomRightRadius: 50,
         paddingVertical: 15,
-        width: "100%",
+        width: "98%",
         borderTopColor: "lightgrey",
-        borderTopWidth: 1
+        borderLeftColor: "lightgrey",
+        borderRightColor: "lightgrey",
+        // borderWidth: 1,
+        // Shadow for iOS
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: -50, // Negative height to lift shadow upwards
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+
+        // Elevation for Android
+        elevation: 5,
     },
     tabbarItem: {
         flex: 1,

@@ -66,7 +66,7 @@ const ProfessionalBackground = () => {
 
     checkAuth();
     fetchData();
-  }, [authState, id, navigation]);
+  }, [authState.authenticated, id, navigation]);
 
   const validateForm = () => {
     const { currentOccupation, linkedinUrl } = formData;
@@ -114,7 +114,7 @@ const ProfessionalBackground = () => {
     } finally {
       setLoading(false);
     }
-  }, [authState.token, formData, id, navigation]);
+  }, [authState.authenticated, formData, id, navigation]);
 
   const handleChange = (name, value) => {
     setFormData((prevState) => ({

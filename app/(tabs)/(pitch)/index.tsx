@@ -31,7 +31,7 @@ const Pitch = () => {
     <View style={styles.body}>
       <View style={styles.imageContainer}>
         <Image
-          source={require("../../../assets/images/PNG File 1.png")}
+          source={require("../../../assets/images/pitch.png")}
           style={styles.image}
         />
         <View style={styles.textContainer}>

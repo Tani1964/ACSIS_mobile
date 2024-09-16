@@ -57,7 +57,7 @@ export const AuthProvider: React.FC = ({ children }) => {
     } else {
       delete axi.defaults.headers.common["Authorization"];
     }
-  }, [authState.token]);
+  }, [authState.authenticated]);
 
   return (
     <AuthContext.Provider value={{ authState, setAuthState }}>

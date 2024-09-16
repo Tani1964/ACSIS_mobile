@@ -24,6 +24,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useAuth } from "../context/AuthContext";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
+import RadioGroup from "react-native-radio-buttons-group";
 
 const Personal = () => {
   const [loading, setLoading] = useState(false);
@@ -32,6 +33,8 @@ const Personal = () => {
   const route = useRoute();
   const { itemId } = route.params || {}; // Default to an empty object to avoid destructuring undefined
   const id = itemId;
+  const [selectedId, setSelectedId] = React.useState();
+  const [selectedId2, setSelectedId2] = React.useState();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -69,6 +72,10 @@ const Personal = () => {
           disabilitySupportDescription:
             data.disability_support_description || "",
         });
+        setSelectedId(
+          data.gender === "Male" ? 1 : data.gender === "Female" ? 2 : 3
+        );
+        setSelectedId2(data.requires_disability_support ? 1 : 2);
         setDate(new Date(data.date_of_birth));
       } catch (error) {
         console.error(error);
@@ -110,14 +117,14 @@ const Personal = () => {
   }, [navigation]);
 
   const disabilityOptions = [
-    { label: "Yes", state: true },
-    { label: "No", state: false },
+    { id: 1, label: "Yes", state: true },
+    { id: 2, label: "No", state: false },
   ];
 
   const genderOptions = [
-    { label: "Male" },
-    { label: "Female" },
-    { label: "Other" },
+    { id: 1, label: "Male", value: "Male" },
+    { id: 2, label: "Female", value: "Female" },
+    { id: 3, label: "Other", value: "Other" },
   ];
 
   const onChange = (event, selectedDate) => {
@@ -152,9 +159,17 @@ const Personal = () => {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${authState.token}` };
+      const newFormData = {
+        ...formData,
+        gender: genderOptions.find((option) => option.id === selectedId)?.value,
+        requiresDisabilitySupport: disabilityOptions.find(
+          (option) => option.id === selectedId2
+        )?.state,
+      };
+
       await axi.patch(
         `/pitch/update-pitch/${id}/personal_information/`,
-        formData,
+        newFormData,
         { headers }
       );
       Alert.alert("Success", "Your personal information has been saved.");
@@ -322,34 +337,25 @@ const Personal = () => {
                   />
                 </View>
                 <Text style={{ fontWeight: "bold" }}>Gender</Text>
-                <RadioButtonRN
-                  data={genderOptions}
-                  box={false}
-                  selectedBtn={(e) =>
-                    setFormData((prevState) => ({
-                      ...prevState,
-                      gender: e.label,
-                    }))
-                  }
-                  icon={
-                    <AntDesign name="checkcircle" size={25} color="#196100" />
-                  }
+                <RadioGroup
+                  radioButtons={genderOptions}
+                  onPress={setSelectedId}
+                  selectedId={selectedId}
+                  containerStyle={styles.radioGroup}
+                  radioButtonStyle={styles.radioButton}
                 />
                 <Text style={{ fontWeight: "bold" }}>
                   Do you require any disability support?
                 </Text>
-                <RadioButtonRN
-                  data={disabilityOptions}
-                  box={false}
-                  selectedBtn={(e) =>
-                    setFormData((prevState) => ({
-                      ...prevState,
-                      requiresDisabilitySupport: e.state,
-                    }))
-                  }
-                  icon={<AntDesign name="rocket1" size={25} color="#196100" />}
+                <RadioGroup
+                  radioButtons={disabilityOptions}
+                  onPress={setSelectedId2}
+                  selectedId={selectedId2}
+                  containerStyle={styles.radioGroup}
+                  radioButtonStyle={styles.radioButton}
                 />
-                {formData.requiresDisabilitySupport && (
+                {disabilityOptions.find((option) => option.id === selectedId2)
+                  ?.state && (
                   <TextInput
                     style={styles.textArea}
                     multiline
@@ -475,5 +481,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  radioGroup: {
+    flexDirection: "row",
+    // justifyContent: 'space-between',
+    gap: 4,
+  },
+  radioButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 15,
   },
 });

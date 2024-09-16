@@ -57,7 +57,7 @@ const TechnicalReview = () => {
     };
 
     checkAuthAndFetchData();
-  }, [authState, id, navigation]);
+  }, [authState.authenticated, id, navigation]);
 
   const submitHandler = async () => {
     setLoading(true);

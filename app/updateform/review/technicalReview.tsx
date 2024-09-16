@@ -57,7 +57,7 @@ const TechnicalReview = () => {
     };
 
     checkAuthAndFetchData();
-  }, [authState, id, navigation]);
+  }, [authState.authenticated, id, navigation]);
 
   const submitHandler = async () => {
     if (!id) {
@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontWeight: "bold",
+    width: 70
   },
   editButton: {
     flexDirection: "row",

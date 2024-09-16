@@ -32,6 +32,8 @@ const competition = () => {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${authState.token}`};
+      console.log(formData);
+      
       const response = await axi.patch(`/pitch/update-pitch/${id}/competition_questions`, formData, { headers });
       Alert.alert("Success", "Your competition information has been saved.");
       navigation.navigate("form/technical", {id:id});
@@ -232,6 +234,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 100, // Ensure there's space for the button
     paddingTop: 30,
+    
   },
   pageLinks: {
     flexDirection: "row",

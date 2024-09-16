@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useEffect } from "react";
+import React, { useState, useLayoutEffect, useEffect, useMemo } from "react";
 import {
   StyleSheet,
   Text,
@@ -16,10 +16,14 @@ import CheckBox from "react-native-check-box";
 import { axi } from "../context/AuthContext";
 import { useAuth } from "../context/AuthContext";
 import * as SecureStore from "expo-secure-store";
+import RadioGroup from 'react-native-radio-buttons-group';
 
 const technical = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
+  const [selectedId, setSelectedId] = React.useState();
+  const [selectedId2, setSelectedId2] = React.useState();
+  const [selectedId3, setSelectedId3] = React.useState();
   const { authState } = useAuth();
   const route = useRoute();
   const { id } = route.params;
@@ -57,8 +61,8 @@ const technical = () => {
   const [isAgreementChecked, setIsAgreementChecked] = useState(false);
 
   const options = [
-    { label: "yes", state: true },
-    { label: "no", state: false },
+    {id:1, label: "yes", state: true },
+    {id:2, label: "no", state: false },
   ];
 
   const submitHandler = async () => {
@@ -69,10 +73,12 @@ const technical = () => {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
+
+      console.log({ ...formData, hasSignedTechnicalAgreement: isAgreementChecked, haveCurrentEmployees: options.find(option => option.id === selectedId3)?.state , haveCurrentInvestors: options.find(option => option.id === selectedId)?.state, haveDebts: options.find(option => option.id === selectedId2)?.state})
      
       const response = await axi.patch(
         `/pitch/update-pitch/${id}/technical_agreement`,
-        { ...formData, hasSignedTechnicalAgreement: isAgreementChecked },
+        { ...formData, hasSignedTechnicalAgreement: isAgreementChecked, haveCurrentEmployees: options.find(option => option.id === selectedId3)?.state , haveCurrentInvestors: options.find(option => option.id === selectedId)?.state, haveDebts: options.find(option => option.id === selectedId2)?.state},
         { headers }
       );
       Alert.alert("Success", "Your competition information has been saved.");
@@ -131,7 +137,7 @@ const technical = () => {
             <Text style={styles.boldText}>
               Does your company have any current investors?
             </Text>
-            <RadioButtonRN
+            {/* <RadioButtonRN
               data={options}
               box={false}
               selectedBtn={(e) =>
@@ -141,8 +147,15 @@ const technical = () => {
                 }))
               }
               icon={<AntDesign name="rocket1" size={25} color="#196100" />}
+            /> */}
+            <RadioGroup
+              radioButtons={options}
+              onPress={setSelectedId}
+              selectedId={selectedId}
+              containerStyle={styles.radioGroup}
+              radioButtonStyle={styles.radioButton}
             />
-            {formData.haveCurrentInvestors && (
+            {options.find(option => option.id === selectedId)?.state && (
               <TextInput
                 style={styles.textArea}
                 multiline
@@ -162,7 +175,7 @@ const technical = () => {
             <Text style={styles.boldText}>
               Do you have any existing debt or liabilities which we should be aware of?
             </Text>
-            <RadioButtonRN
+            {/* <RadioButtonRN
               data={options}
               box={false}
               selectedBtn={(e) =>
@@ -172,8 +185,15 @@ const technical = () => {
                 }))
               }
               icon={<AntDesign name="rocket1" size={25} color="#196100" />}
-            />
-            {formData.haveDebts && (
+            /> */}
+            <RadioGroup
+            radioButtons={options}
+            onPress={setSelectedId2}
+            selectedId={selectedId2}
+            containerStyle={styles.radioGroup}
+            radioButtonStyle={styles.radioButton}
+          />
+            {options.find(option => option.id === selectedId2)?.state && (
               <TextInput
                 style={styles.textArea}
                 multiline
@@ -193,7 +213,7 @@ const technical = () => {
             <Text style={styles.boldText}>
               Does your company currently employ people?
             </Text>
-            <RadioButtonRN
+            {/* <RadioButtonRN
               data={options}
               box={false}
               selectedBtn={(e) =>
@@ -203,7 +223,14 @@ const technical = () => {
                 }))
               }
               icon={<AntDesign name="rocket1" size={25} color="#196100" />}
-            />
+            /> */}
+            <RadioGroup
+            radioButtons={options}
+            onPress={setSelectedId3}
+            selectedId={selectedId3}
+            containerStyle={styles.radioGroup}
+            radioButtonStyle={styles.radioButton}
+          />
           </View>
           <View style={styles.agreementContainer}>
             <CheckBox
@@ -307,5 +334,14 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },radioGroup: {
+    flexDirection: 'row',
+    // justifyContent: 'space-between',
+    gap: 4
+  },
+  radioButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15,
   },
 });

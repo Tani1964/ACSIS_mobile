@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,33 +8,30 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
 } from "react-native";
-import React, { useState, useEffect, useLayoutEffect } from "react";
 import * as Location from "expo-location";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, { useSharedValue, useAnimatedStyle } from "react-native-reanimated";
 
 const FullView = () => {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [destination, setDestination] = useState(null);
   const [mapLoading, setMapLoading] = useState(true);
-  const [eventImages, setEventImages] = useState([]);
-  const [eventLocation, setEventLocation] = useState("");
   const [event, setEvent] = useState({});
-  const [region, setRegion] = useState(null); // Add region state
-
-  const route = useRoute();
-  const { eventID, location2 } = route.params;
+  const [region, setRegion] = useState(null);
+  const navigation = useNavigation();
 
   const { width, height } = Dimensions.get("window");
   const ASPECT_RATIO = width / height;
-  const LATITUDE_DELTA = 0.0922; // Adjust as needed
+  const LATITUDE_DELTA = 0.0922;
   const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
-  const navigation = useNavigation();
+  // Set initial height of the "More Info" section
+  const translateY = useSharedValue(height * 0.6); // Default height to 60% of the screen
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -41,27 +39,36 @@ const FullView = () => {
     });
   }, [navigation]);
 
+  const route = useRoute();
+  const { eventID, location2 } = route.params;
+
   const getPermissions = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission to access location was denied");
-      setMapLoading(false);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission to access location was denied");
+        setMapLoading(false);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("Permission error:", error);
       return false;
     }
-    return true;
   };
 
-  const getEvent = async () => {
+  const getEvent = useCallback(async () => {
     try {
       const response = await axi.get(`/event/get-event/${eventID}`);
       setEvent(response.data.event);
-      console.log(response.data.event.sponsor_images_urls)
+      console.log(event.sponsor_images_urls);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching event:", error);
+      Alert.alert("Error", "Unable to fetch event details.");
     }
-  };
+  }, [eventID]);
 
-  const getCurrentLocation = async () => {
+  const getCurrentLocation = useCallback(async () => {
     const permissionGranted = await getPermissions();
     if (!permissionGranted) return;
 
@@ -69,14 +76,11 @@ const FullView = () => {
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
-      console.log("current ", location);
       const currentCoords = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       };
       setCurrentLocation(currentCoords);
-
-      // Set region to center on current location
       setRegion({
         ...currentCoords,
         latitudeDelta: LATITUDE_DELTA,
@@ -89,38 +93,32 @@ const FullView = () => {
         "Unable to retrieve current location. Please make sure to enable Location permissions."
       );
     }
-  };
+  }, [LATITUDE_DELTA, LONGITUDE_DELTA]);
 
-  const geocode = async () => {
+  const geocode = useCallback(async () => {
     try {
-      setMapLoading(true)
-      if (!event.location && !location2) {
-        return; // Exit the function if no location is available
-      }
+      if (!event.location && !location2) return;
 
-      console.log("kkk", event.location || location2);
+      const address = event.location || location2;
+      const apiKey = "AIzaSyCWDZCZ1ewtuTm5hl2euGj0mrMn-F0DJIw";
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=${apiKey}`
+      );
+      const data = await response.json();
 
-      // Await the geocoding operation directly
-      const geocodedLocation = await Location.geocodeAsync(event.location || location2);
-      console.log("geo", geocodedLocation);
-
-      if (geocodedLocation.length > 0) {
-        const { latitude, longitude } = geocodedLocation[0];
-        if (latitude && longitude) {
-          setDestination({
-            latitude,
-            longitude,
-          });
-          // Update region to include destination
-          setRegion({
-            latitude,
-            longitude,
-            latitudeDelta: LATITUDE_DELTA,
-            longitudeDelta: LONGITUDE_DELTA,
-          });
-        } else {
-          Alert.alert("Geocoding Error", "Invalid coordinates returned.");
-        }
+      if (data.status === "OK" && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        setDestination({ latitude: lat, longitude: lng });
+        setRegion({
+          latitude: lat,
+          longitude: lng,
+          latitudeDelta: LATITUDE_DELTA,
+          longitudeDelta: LONGITUDE_DELTA,
+        });
+      } else {
+        Alert.alert("Geocoding Error", "No geocoded location found.");
       }
     } catch (error) {
       console.error("Geocoding error:", error);
@@ -128,16 +126,18 @@ const FullView = () => {
     } finally {
       setMapLoading(false);
     }
-  };
+  }, [event.location, location2, LATITUDE_DELTA, LONGITUDE_DELTA]);
 
   useEffect(() => {
     getEvent();
-  }, []);
+  }, [getEvent]);
 
   useEffect(() => {
-    getCurrentLocation();
-    geocode();
-  }, [event.location]);
+    if (event.location) {
+      getCurrentLocation();
+      geocode();
+    }
+  }, [event.location, getCurrentLocation, geocode]);
 
   const formatDateTime = (dateTimeString) => {
     const date = new Date(dateTimeString);
@@ -149,15 +149,35 @@ const FullView = () => {
     )}, ${date.toLocaleTimeString("en-US", timeOptions)}`;
   };
 
+  // Gesture handler for dragging the info container
+  const gesture = Gesture.Pan()
+    .onUpdate((event) => {
+      // Update translateY based on the gesture movement
+      translateY.value = Math.min(height, Math.max(0, translateY.value + event.translationY));
+    });
+
+  // Animated style for the draggable info container
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
         <MapView
+          provider={PROVIDER_GOOGLE}
           style={styles.map}
           showsUserLocation={true}
           showsMyLocationButton={true}
           loadingEnabled={true}
-          region={region} // Set region
+          region={
+            region || {
+              latitude: 0,
+              longitude: 0,
+              latitudeDelta: LATITUDE_DELTA,
+              longitudeDelta: LONGITUDE_DELTA,
+            }
+          }
         >
           {destination && (
             <>
@@ -177,134 +197,120 @@ const FullView = () => {
           )}
         </MapView>
       </View>
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoTitle}>More Info</Text>
-        <ScrollView style={styles.infoScroll}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Location: </Text>
-            <Text>{event.location || "N/A"}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Title: </Text>
-            <Text>{event.title || "N/A"}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Description: </Text>
-            <Text>{event.description || "N/A"}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Predicted Duration: </Text>
-            <Text>{event.duration_hours ? `${event.duration_hours} Hours` : "N/A"}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Date and Time: </Text>
-            <Text>{event.date_time ? formatDateTime(event.date_time) : "N/A"}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Sponsors: </Text>
-            {event.sponsors && event.sponsors.length > 0 ? (
-              event.sponsors.map((sponsor, index) => (
-                <Text key={index}>{sponsor.name}</Text>
-              ))
-            ) : (
-              <Text>None</Text>
-            )}
-          </View>
-          <View style={styles.links}>
-            <Text style={styles.infoLabel}>Other Links: </Text>
-            {event.otherLinks && event.otherLinks.length > 0 ? (
-              event.otherLinks.map((link, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() =>
-                    navigation.navigate("maps/linkWeb", { link: link.url })
-                  }
-                >
-                  <Text style={styles.linkText}>{link.title}</Text>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <Text>None</Text>
-            )}
-          </View>
-          <View style={styles.infoColumn}>
-            <Text style={styles.infoLabel}>Sponsor Images:</Text>
-            <View style={{ display: "flex", flexDirection: "row", gap: 10 }}>
-              {event.sponsor_images_urls && event.sponsor_images_urls.length > 0 ? (
-                event.sponsor_images_urls.map((imageRef, index) => (
-                  <Image
-                    key={index}
-                    source={{ uri: imageRef }}
-                    style={styles.sponsorImage}
-                  />
+
+      {/* Draggable Info Container */}
+      <GestureDetector gesture={gesture}>
+        <Animated.View style={[styles.infoContainer, animatedStyle]}>
+          <Text style={styles.infoTitle}>More Info</Text>
+          <ScrollView style={styles.infoScroll}>
+            {/* Render event details here as before */}
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Location: </Text>
+              <Text>{event.location || "N/A"}</Text>
+            </View>
+            {/* Additional info rows */}
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Date and Time: </Text>
+              <Text>{event.date_time ? formatDateTime(event.date_time) : "N/A"}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Title: </Text>
+              <Text>{event.title || "N/A"}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Description: </Text>
+              <Text>{event.description || "N/A"}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Predicted Duration: </Text>
+              <Text>
+                {event.duration_hours ? `${event.duration_hours} Hours` : "N/A"}
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Sponsors: </Text>
+              {event.sponsors && event.sponsors.length > 0 ? (
+                event.sponsors.map((sponsor, index) => (
+                  <Text key={index}>{sponsor.name}</Text>
                 ))
               ) : (
                 <Text>None</Text>
               )}
             </View>
-          </View>
-        </ScrollView>
-      </View>
+            <View style={styles.links}>
+              <Text style={styles.infoLabel}>Other Links: </Text>
+              {event.otherLinks && event.otherLinks.length > 0 ? (
+                event.otherLinks.map((link, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() =>
+                      navigation.navigate("maps/linkWeb", { link: link.url })
+                    }
+                  >
+                    <Text style={styles.linkText}>{link.title}</Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text>No Links Available</Text>
+              )}
+            </View>
+          </ScrollView>
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 };
-
-export default FullView;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  map: {
-    width: "100%",
-    height: "100%",
-  },
   mapContainer: {
-    height: "60%",
-    justifyContent: "center",
-    alignItems: "center",
+    flex: 1,
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
   },
   infoContainer: {
-    paddingHorizontal: 4,
-    borderTopWidth: 8,
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderTopColor: "green",
-    borderRightColor: "green",
-    borderLeftColor: "green",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "100%", // Full height
+    backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingTop: 10,
-    paddingBottom: 150,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   infoTitle: {
-    textAlign: "center",
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 6,
+    padding: 16,
   },
   infoScroll: {
-    marginHorizontal: 6,
-    paddingBottom: 10,
-    height: "40%",
+    padding: 16,
   },
   infoRow: {
-    marginVertical: 4,
     flexDirection: "row",
+    marginBottom: 10,
   },
   infoLabel: {
     fontWeight: "bold",
   },
-  infoColumn: {
-    marginVertical: 4,
-  },
   links: {
-    marginVertical: 4,
+    marginTop: 20,
   },
   linkText: {
     color: "blue",
-  },
-  sponsorImage: {
-    width: 70,
-    height: 50,
+    textDecorationLine: "underline",
   },
 });
+
+export default FullView;

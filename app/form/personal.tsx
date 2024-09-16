@@ -1,40 +1,23 @@
-import React, { useEffect, useState, useLayoutEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  ScrollView,
-  Pressable,
-  Platform,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
-import {
-  Ionicons,
-  AntDesign,
-  SimpleLineIcons,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
-import ActionButton from "../../components/actionButton";
-import RadioButtonRN from "radio-buttons-react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { useAuth } from "../context/AuthContext";
-import { useNavigation } from "@react-navigation/native";
-import { axi } from "../context/AuthContext";
+import React from 'react';
+import { StyleSheet, Text, View, TextInput, Pressable, ActivityIndicator, Alert, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { Ionicons, AntDesign, SimpleLineIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useAuth, axi } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import RadioGroup from 'react-native-radio-buttons-group';
+
 
 const Personal = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = React.useState(false);
   const { authState } = useAuth();
   const navigation = useNavigation();
 
-  useEffect(() => {
+  React.useEffect(() => {
     const checkAuth = async () => {
       try {
         const auth = await authState.authenticated;
         if (!auth) {
-          navigation.navigate("auth/mainAuth/signin");
+          navigation.navigate('auth/mainAuth/signin');
         }
       } catch (error) {
         console.error(error);
@@ -50,44 +33,45 @@ const Personal = () => {
     const day = `0${date.getDate()}`.slice(-2);
     return `${year}-${month}-${day}`;
   };
-  
-  const [id, setId] = useState("");
-  const [date, setDate] = useState(new Date());
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phoneNumber: "",
-    dateOfBirth: formatDate(date),
-    nationality: "",
-    ethnicity: "",
-    gender: "",  // Added gender field
-    requiresDisabilitySupport: false,
-    disabilitySupportDescription: "",
-  });
-  const [showPicker, setShowPicker] = useState(false);
 
-  useLayoutEffect(() => {
+  const [date, setDate] = React.useState(new Date());
+  const [formData, setFormData] = React.useState({
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    dateOfBirth: formatDate(date),
+    nationality: '',
+    ethnicity: '',
+    gender: '',
+    requiresDisabilitySupport: false,
+    disabilitySupportDescription: '',
+  });
+  const [showPicker, setShowPicker] = React.useState(false);
+  const [selectedId, setSelectedId] = React.useState();
+  const [selectedId2, setSelectedId2] = React.useState();
+
+  React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: "",
+      headerTitle: '',
     });
   }, [navigation]);
 
   const disabilityOptions = [
-    { label: "Yes", state: true },
-    { label: "No", state: false },
+    { id: 1, label: 'Yes', state: true },
+    { id: 2, label: 'No', state: false },
   ];
 
   const genderOptions = [
-    { label: "Male", value: "Male" },
-    { label: "Female", value: "Female" },
-    { label: "Other", value: "Other" },
+    { id: 1, label: 'Male', value: 'Male' },
+    { id: 2, label: 'Female', value: 'Female' },
+    { id: 3, label: 'Other', value: 'Other' },
   ];
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
-    setShowPicker(Platform.OS === "ios");
+    setShowPicker(Platform.OS === 'ios');
     setDate(currentDate);
-    setFormData((prevState) => ({
+    setFormData(prevState => ({
       ...prevState,
       dateOfBirth: formatDate(currentDate),
     }));
@@ -96,30 +80,35 @@ const Personal = () => {
   const submitHandler = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
-      const response = await axi.post("/pitch/initiate-pitch", formData, {
-        headers
+      const headers = {
+        Authorization: `Bearer ${authState.token}`,
+        'ngrok-skip-browser-warning': 'true',
+      };
+      const newFormData = { ...formData, gender: genderOptions.find(option => option.id === selectedId)?.value, requiresDisabilitySupport: disabilityOptions.find(option => option.id === selectedId2)?.state };
+      
+      const response = await axi.post('/pitch/initiate-pitch', newFormData, {
+        headers,
       });
-      const pitchId = response.data.pitch.id
-      Alert.alert("Success", "Your personal information has been saved.");
+      const pitchId = response.data.pitch.id;
+      Alert.alert('Success', 'Your personal information has been saved.');
 
-      navigation.navigate("form/proffesional", { id: pitchId });
+      navigation.navigate('form/proffesional', { id: pitchId });
     } catch (error) {
       if (error.response) {
         const statusCode = error.response.status;
         if (statusCode === 400) {
-          Alert.alert("Update Error", "Try again later.");
+          Alert.alert('Update Error', 'Try again later.');
         } else if (statusCode === 401) {
-          navigation.navigate("auth/mainAuth/signin");
+          navigation.navigate('auth/mainAuth/signin');
         } else if (statusCode === 422) {
-          Alert.alert("Update failed", "Make sure to input the right entries.");
+          Alert.alert('Update failed', 'Make sure to input the right entries.');
         } else if (statusCode === 404) {
-          Alert.alert("Pitch not found");
+          Alert.alert('Pitch not found');
         } else {
-          Alert.alert("Update Error", "Try again later.");
+          Alert.alert('Update Error', 'Try again later.');
         }
       } else {
-        Alert.alert("Update failed", "Network error. Please check your internet connection.");
+        Alert.alert('Update failed', 'Network error. Please check your internet connection.');
       }
       console.error(error);
     } finally {
@@ -132,7 +121,7 @@ const Personal = () => {
   };
 
   const confirmIOSDate = () => {
-    setFormData((prevState) => ({
+    setFormData(prevState => ({
       ...prevState,
       dateOfBirth: formatDate(date),
     }));
@@ -143,28 +132,20 @@ const Personal = () => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.innerContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16 }}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
             <View style={styles.header}>
               <Text style={styles.headerTextActive}>
-                Personal Information{" "}
-                <AntDesign name="right" size={13} color="black" />
+                Personal Information <AntDesign name="right" size={13} color="black" />
               </Text>
               <Text style={styles.headerText}>
-                Professional Background{" "}
-                <AntDesign name="right" size={13} color="black" />
+                Professional Background <AntDesign name="right" size={13} color="black" />
               </Text>
               <Text style={styles.headerText}>
-                Competition Questions{" "}
-                <AntDesign name="right" size={15} color="black" />
+                Competition Questions <AntDesign name="right" size={15} color="black" />
               </Text>
               <Text style={styles.pageLinkText}>
-              Technical Questions{" "}
-              <AntDesign name="right" size={13} color="black" />
-            </Text>
+                Technical Questions <AntDesign name="right" size={13} color="black" />
+              </Text>
             </View>
           </ScrollView>
           <View style={styles.form}>
@@ -174,12 +155,7 @@ const Personal = () => {
                 style={styles.inputField}
                 placeholder="Full Name"
                 value={formData.fullName}
-                onChangeText={(newText) =>
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    fullName: newText,
-                  }))
-                }
+                onChangeText={newText => setFormData(prevState => ({ ...prevState, fullName: newText }))}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -188,9 +164,7 @@ const Personal = () => {
                 style={styles.inputField}
                 placeholder="Email address"
                 value={formData.email}
-                onChangeText={(newText) =>
-                  setFormData((prevState) => ({ ...prevState, email: newText }))
-                }
+                onChangeText={newText => setFormData(prevState => ({ ...prevState, email: newText }))}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -199,21 +173,12 @@ const Personal = () => {
                 style={styles.inputField}
                 placeholder="Mobile number with country code"
                 value={formData.phoneNumber}
-                onChangeText={(newText) =>
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    phoneNumber: newText,
-                  }))
-                }
+                onChangeText={newText => setFormData(prevState => ({ ...prevState, phoneNumber: newText }))}
               />
             </View>
             <View style={styles.inputContainer}>
-              <Pressable
-                onPress={toggleDatePicker}
-                style={{ flexDirection: "row", alignItems: "center" }}
-              >
+              <Pressable onPress={toggleDatePicker} style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <AntDesign name="calendar" size={24} color="lightgrey" />
-                
                 <TextInput
                   style={styles.inputField}
                   placeholder="Date of Birth"
@@ -221,7 +186,7 @@ const Personal = () => {
                   editable={false}
                   pointerEvents="none"
                 />
-                <Text style={{color:"grey"}}>D.O.B</Text>
+                <Text style={{ color: 'grey' }}>D.O.B</Text>
               </Pressable>
               {showPicker && (
                 <DateTimePicker
@@ -231,18 +196,12 @@ const Personal = () => {
                   onChange={onChange}
                 />
               )}
-              {showPicker && Platform.OS === "ios" && (
+              {showPicker && Platform.OS === 'ios' && (
                 <View style={styles.pickerButtonContainer}>
-                  <Pressable
-                    style={styles.pickerButton}
-                    onPress={toggleDatePicker}
-                  >
+                  <Pressable style={styles.pickerButton} onPress={toggleDatePicker}>
                     <Text>Cancel</Text>
                   </Pressable>
-                  <Pressable
-                    style={styles.pickerButton}
-                    onPress={confirmIOSDate}
-                  >
+                  <Pressable style={styles.pickerButton} onPress={confirmIOSDate}>
                     <Text>Confirm</Text>
                   </Pressable>
                 </View>
@@ -254,85 +213,51 @@ const Personal = () => {
                 style={styles.inputField}
                 placeholder="Nationality"
                 value={formData.nationality}
-                onChangeText={(newText) =>
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    nationality: newText,
-                  }))
-                }
+                onChangeText={newText => setFormData(prevState => ({ ...prevState, nationality: newText }))}
               />
             </View>
             <View style={styles.inputContainer}>
-              <MaterialCommunityIcons
-                name="account-group-outline"
-                size={24}
-                color="lightgrey"
-              />
+              <MaterialCommunityIcons name="account-group-outline" size={24} color="lightgrey" />
               <TextInput
                 style={styles.inputField}
                 placeholder="Ethnicity"
                 value={formData.ethnicity}
-                onChangeText={(newText) =>
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    ethnicity: newText,
-                  }))
-                }
+                onChangeText={newText => setFormData(prevState => ({ ...prevState, ethnicity: newText }))}
               />
             </View>
-            <Text style={{ fontWeight: "bold" }}>
-              Gender
-            </Text>
-            <RadioButtonRN
-              data={genderOptions}
-              box={false}
-              selectedBtn={(e) =>
-                setFormData((prevState) => ({
-                  ...prevState,
-                  gender: e.value,
-                }))
-              }
-              icon={<AntDesign name="rocket1" size={25} color="#196100" />}
+            <Text style={styles.label}>Gender</Text>
+            <RadioGroup
+              radioButtons={genderOptions}
+              onPress={setSelectedId}
+              selectedId={selectedId}
+              containerStyle={styles.radioGroup}
+              radioButtonStyle={styles.radioButton}
             />
-            <Text style={{ fontWeight: "bold" }}>
-              Do you require any disability support?
-            </Text>
-            <RadioButtonRN
-              data={disabilityOptions}
-              box={false}
-              selectedBtn={(e) =>
-                setFormData((prevState) => ({
-                  ...prevState,
-                  requiresDisabilitySupport: e.state,
-                }))
-              }
-              icon={<AntDesign name="rocket1" size={25} color="#196100" />}
+
+            <Text style={styles.label}>Do you require any disability support?</Text>
+            <RadioGroup
+              radioButtons={disabilityOptions}
+              onPress={setSelectedId2}
+              selectedId={selectedId2}
+              containerStyle={styles.radioGroup}
+              radioButtonStyle={styles.radioButton}
             />
-            {formData.requiresDisabilitySupport && (
+            {disabilityOptions.find(option => option.id === selectedId2)?.state  && (
               <TextInput
                 style={styles.textArea}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
                 placeholder="Please specify..."
-                value={formData.disabilityInfo}
-                onChangeText={(newText) =>
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    disabilityInfo: newText,
-                  }))
-                }
+                value={formData.disabilitySupportDescription}
+                onChangeText={newText => setFormData(prevState => ({ ...prevState, disabilitySupportDescription: newText }))}
               />
             )}
           </View>
         </View>
       </ScrollView>
       <View style={styles.actionButtonContainer}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={submitHandler}
-          disabled={loading}
-        >
+        <TouchableOpacity style={styles.actionButton} onPress={submitHandler} disabled={loading}>
           {loading ? (
             <ActivityIndicator color="white" />
           ) : (
@@ -344,12 +269,10 @@ const Personal = () => {
   );
 };
 
-export default Personal;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: 'white',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -360,31 +283,31 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingBottom: 20,
   },
   headerTextActive: {
     fontSize: 13,
-    color: "#196100",
+    color: '#196100',
     marginHorizontal: 10,
   },
   headerText: {
     fontSize: 13,
-    color: "grey",
+    color: 'grey',
     marginHorizontal: 10,
   },
   form: {
-    flexDirection: "column",
+    flexDirection: 'column',
     gap: 20,
   },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
     padding: 6,
-    borderColor: "lightgrey",
+    borderColor: 'lightgrey',
     borderWidth: 1,
     borderRadius: 10,
   },
@@ -394,36 +317,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   textArea: {
-    height: "auto",
+    height: 'auto',
     borderWidth: 1,
-    borderColor: "lightgrey",
+    borderColor: 'lightgrey',
     borderRadius: 10,
     marginTop: 10,
     padding: 10,
   },
   actionButtonContainer: {
     padding: 20,
-    backgroundColor: "white",
+    backgroundColor: 'white',
   },
   actionButton: {
-    backgroundColor: "#196100",
+    backgroundColor: '#196100',
     borderRadius: 100,
     paddingVertical: 15,
-    alignItems: "center",
+    alignItems: 'center',
   },
   actionButtonText: {
-    color: "white",
+    color: 'white',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   pickerButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
   pickerButton: {
     padding: 10,
-    backgroundColor: "lightgrey",
+    backgroundColor: 'lightgrey',
     borderRadius: 10,
     margin: 10,
   },
+  label: {
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  radioGroup: {
+    flexDirection: 'row',
+    // justifyContent: 'space-between',
+    gap: 4
+  },
+  radioButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15,
+  },
 });
+
+export default Personal;

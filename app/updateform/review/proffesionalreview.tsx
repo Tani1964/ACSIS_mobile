@@ -92,7 +92,7 @@ const ProfessionalReview = () => {
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() =>(
-            navigation.navigate("updateform/review/competitionreview", { id: id })
+            navigation.navigate("form/review/competitionreview", { id: id })
           )
           }
           disabled={loading}
@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontWeight: "bold",
+    width: 70
   },
   editButton: {
     flexDirection: "row",
