@@ -16,7 +16,6 @@ const Header = () => {
     const getUser = async () => {
       try {
         const headers = { Authorization: `Bearer ${authState.token}` };
-        console.log(headers)
         const response = await axi.get("/user", { headers });
         setUser(response.data);
       } catch (error) {

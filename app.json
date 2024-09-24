@@ -4,7 +4,7 @@
     "slug": "acsis",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/adaptive-icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -24,7 +24,10 @@
           }
         ]
       },
-      "bundleIdentifier": "com.tani1964.ACSIS"
+      "bundleIdentifier": "com.tani1964.ACSIS",
+      "config": {
+        "googleMapsApiKey": "AIzaSyCWDZCZ1ewtuTm5hl2euGj0mrMn-F0DJIw"
+      }
     },
     "android": {
       "package": "acsis.mobile",
@@ -36,7 +39,7 @@
       "versionCode": 1,
       "packages": "com.acsis.googleauthexporeactnative",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [

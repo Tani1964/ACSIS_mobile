@@ -32,7 +32,6 @@ const competition = () => {
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${authState.token}`};
-      console.log(formData);
       
       const response = await axi.patch(`/pitch/update-pitch/${id}/competition_questions`, formData, { headers });
       Alert.alert("Success", "Your competition information has been saved.");
@@ -81,7 +80,7 @@ const competition = () => {
             </Text>
             <Text style={styles.activePageLinkText}>
               Competition Questions{" "}
-              <AntDesign name="right" size={15} color="black" />
+              <AntDesign name="right" size={13} color="black" />
             </Text>
             <Text style={styles.pageLinkText}>
               Technical Questions{" "}

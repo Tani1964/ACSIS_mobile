@@ -10,10 +10,12 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
+  useWindowDimensions
 } from "react-native";
 import Header from "../../components/header";
 import { axi, useAuth } from "../context/AuthContext";
 import { useNavigation } from "@react-navigation/native";
+import MainAdvert from "@/components/mainAdvert";
 
 const Votes = () => {
   const [page, setPage] = useState("votes");
@@ -31,15 +33,16 @@ const Votes = () => {
   const [nominations, setNominations] = useState([]);
   const [nominationSuggestions, setNominationSuggestions] = useState([]);
   const [nominee, setNominee] = useState(null);
-  const [nomineeType, setNomineeType] = useState("")
+  const [nomineeType, setNomineeType] = useState("");
 
   const [buttonLoader, setButtonLoader] = useState(false);
+
+  const { width, height } = useWindowDimensions();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const auth = await authState.authenticated;
-        console.log(authState.token);
         if (!auth) {
           navigation.navigate("auth/mainAuth/signin");
         } else {
@@ -140,7 +143,7 @@ const Votes = () => {
         awardId: selectedAward.id,
         reason: "",
       };
-      console.log(formData)
+      console.log(formData);
 
       await axi.post("/award/nominate-for-award", formData);
 
@@ -225,13 +228,12 @@ const Votes = () => {
       Alert.alert(
         "Vote Submitted",
         `You voted for ${
-          selectedCompany?.business_nominee?.business_name || 
-          selectedCompany?.competition_questions?.business_name || 
-          selectedCompany?.full_name || 
+          selectedCompany?.business_nominee?.business_name ||
+          selectedCompany?.competition_questions?.business_name ||
+          selectedCompany?.full_name ||
           "Unknown Nominee"
         }`
       );
-        
     } catch (error) {
       let message =
         "An error occurred while submitting your vote. Please try again later.";
@@ -313,52 +315,59 @@ const Votes = () => {
   return (
     <View style={styles.container}>
       <Header />
-      {page === "votes" ? (
+      <View>
+        <View style={styles.sponsors}>
+          <MainAdvert filter={"award"} />
+        </View>
         <ScrollView
-          style={{ paddingHorizontal: 10, paddingVertical: 10 }}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          {votingData.map((award) => (
-            <View key={award.id} style={styles.awardContainer}>
-              <View style={styles.awardHeader}>
-                <Text style={styles.awardTitle}>{award.title} 🏅</Text>
-                {award.status === "nominations-open" ? (
-                  <TouchableOpacity
-                    style={styles.nominateButton}
-                    onPress={() => openNominationModal(award)}
-                  >
-                    <Text style={styles.nominateButtonText}>Nominate</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.nominateButton}
-                    onPress={() => openVoteModal(award)}
-                  >
-                    <Text style={styles.nominateButtonText}>Vote</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      ) : (
-        <ScrollView style={{ paddingHorizontal: 10 }}>
-          {nominations.length === 0 && (
-            <Text>You haven't been Nominated Yet.</Text>
-          )}
-          {Array.isArray(nominations) &&
-            nominations.map((award) => (
+            style={[{ paddingHorizontal: 10, paddingVertical: 10, marginTop: 100},{ height: height * 0.63 }]}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+        {page === "votes" ? (
+            <View>
+            {votingData.map((award) => (
               <View key={award.id} style={styles.awardContainer}>
                 <View style={styles.awardHeader}>
                   <Text style={styles.awardTitle}>{award.title} 🏅</Text>
+                  {award.status === "nominations-open" ? (
+                    <TouchableOpacity
+                      style={styles.nominateButton}
+                      onPress={() => openNominationModal(award)}
+                    >
+                      <Text style={styles.nominateButtonText}>Nominate</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.nominateButton}
+                      onPress={() => openVoteModal(award)}
+                    >
+                      <Text style={styles.nominateButtonText}>Vote</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
             ))}
+          </View>
+        ) : (
+          <View>
+            {nominations.length === 0 && (
+              <Text>You haven't been Nominated Yet.</Text>
+            )}
+            {Array.isArray(nominations) &&
+              nominations.map((award) => (
+                <View key={award.id} style={styles.awardContainer}>
+                  <View style={styles.awardHeader}>
+                    <Text style={styles.awardTitle}>{award.title} 🏅</Text>
+                  </View>
+                </View>
+              ))}
+          </View>
+        )}
+        <View style={{ height: 100 }} />
         </ScrollView>
-      )}
-
+      </View>
       {/* Nomination Modal */}
       <Modal
         animationType="slide"
@@ -380,7 +389,7 @@ const Votes = () => {
                 setNominationInput(text);
                 setNominee(null); // Clear the selected nominee when text changes
               }}
-              placeholder="Enter business name"
+              placeholder="Enter business or user name"
             />
             <ScrollView>
               {Array.isArray(nominationSuggestions) &&
@@ -399,11 +408,11 @@ const Votes = () => {
                           setNominationInput(displayText);
                           setNominee(suggestion);
                           if (suggestion.business_name) {
-                            setNomineeType("business")
-                          }else if(suggestion.full_name){
-                            setNomineeType("user")}
-                          else{
-                            setNomineeType("pitch")
+                            setNomineeType("business");
+                          } else if (suggestion.full_name) {
+                            setNomineeType("user");
+                          } else {
+                            setNomineeType("pitch");
                           }
                         }}
                         style={styles.suggestionItem}
@@ -466,11 +475,11 @@ const Votes = () => {
                     ]}
                   >
                     <Text>
-  {nominee?.business_nominee?.business_name || 
-   nominee?.competition_questions?.business_name || 
-   nominee?.full_name || 
-   "Unnamed Nominee"}
-</Text>
+                      {nominee?.business_nominee?.business_name ||
+                        nominee?.competition_questions?.business_name ||
+                        nominee?.full_name ||
+                        "Unnamed Nominee"}
+                    </Text>
                   </TouchableOpacity>
                 ))}
             </ScrollView>
@@ -495,7 +504,7 @@ const Votes = () => {
         </View>
       </Modal>
 
-      <View style={styles.bottomTabContainer}>
+      {/* <View style={styles.bottomTabContainer}>
         <TouchableOpacity
           onPress={() => setPage("votes")}
           style={[styles.bottomTab, page === "votes" && styles.bottomTabActive]}
@@ -511,7 +520,7 @@ const Votes = () => {
         >
           <Text style={styles.bottomTabText}>Nominations</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 };
@@ -527,7 +536,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 30 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 5,
@@ -615,6 +624,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
+  },
+  innerContainer: {
+    marginTop: 100,
+  },
+  sponsors: {
+    position: "absolute", // Absolute positioning to overlap the WebView
+    top: 0, // Adjust as needed to control the overlap position
+    left: 0,
+    right: 0,
+    height: "14%", // Adjust height as needed
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white", // Semi-transparent background to overlap but still show the WebView content
+    zIndex: 1, // Ensure it appears above the WebView
   },
 });
 

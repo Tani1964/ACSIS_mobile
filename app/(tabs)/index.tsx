@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, ActivityIndicator, Alert, RefreshControl, ScrollView } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../../components/header';
 import { WebView } from 'react-native-webview';
 import MainAdvert from '@/components/mainAdvert';
+
 
 const Home = () => {
   const [hasError, setHasError] = useState(false);
@@ -17,6 +18,9 @@ const Home = () => {
       [{ text: "OK" }]
     );
   };
+  
+  
+  
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -49,8 +53,7 @@ const Home = () => {
           />
         )}
         <View style={styles.sponsors}>
-          <Text style={styles.sponsorText}>Home</Text>
-          <MainAdvert/>
+          <MainAdvert filter={"general"}/>
         </View>
       </ScrollView>
     </View>

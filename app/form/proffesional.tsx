@@ -112,7 +112,7 @@ const Proffessional = () => {
               </Text>
               <Text style={styles.headerText}>
                 Competition Questions{" "}
-                <AntDesign name="right" size={15} color="black" />
+                <AntDesign name="right" size={13} color="black" />
               </Text>
               <Text style={styles.headerText}>
               Technical Questions{" "}

@@ -269,15 +269,15 @@ const Personal = () => {
                     style={{ flexDirection: "row", alignItems: "center" }}
                   >
                     <AntDesign name="calendar" size={24} color="lightgrey" />
-
-                    <TextInput
-                      style={styles.inputField}
-                      placeholder="Date of Birth"
-                      value={formData.dateOfBirth}
-                      editable={false}
-                      pointerEvents="none"
-                    />
-                    <Text style={{ color: "grey" }}>D.O.B</Text>
+                <Text style={{ color: 'grey' }}>      </Text>
+                <Text style={{ color: 'grey' }}>Date Of Birth:</Text>
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="Date of Birth"
+                  value={formData.dateOfBirth}
+                  editable={false}
+                  pointerEvents="none"
+                />
                   </Pressable>
                   {showPicker && (
                     <DateTimePicker

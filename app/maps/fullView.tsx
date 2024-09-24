@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useLayoutEffect, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from "react";
 import {
   StyleSheet,
   Text,
@@ -8,6 +13,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Platform
 } from "react-native";
 import * as Location from "expo-location";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
@@ -15,7 +21,11 @@ import MapViewDirections from "react-native-maps-directions";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, { useSharedValue, useAnimatedStyle } from "react-native-reanimated";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring
+} from "react-native-reanimated";
 
 const FullView = () => {
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -61,7 +71,6 @@ const FullView = () => {
     try {
       const response = await axi.get(`/event/get-event/${eventID}`);
       setEvent(response.data.event);
-      console.log(event.sponsor_images_urls);
     } catch (error) {
       console.error("Error fetching event:", error);
       Alert.alert("Error", "Unable to fetch event details.");
@@ -150,11 +159,14 @@ const FullView = () => {
   };
 
   // Gesture handler for dragging the info container
-  const gesture = Gesture.Pan()
-    .onUpdate((event) => {
-      // Update translateY based on the gesture movement
-      translateY.value = Math.min(height, Math.max(0, translateY.value + event.translationY));
+  const gesture = Gesture.Pan().onUpdate((event) => {
+    // Clamp translateY to keep it within visible boundaries
+    const newTranslateY = translateY.value + event.translationY;
+    translateY.value = withSpring(Math.min(height, Math.max(height * 0.2, newTranslateY)), {
+      damping: 20,
+      stiffness: 90,
     });
+  });
 
   // Animated style for the draggable info container
   const animatedStyle = useAnimatedStyle(() => ({
@@ -165,7 +177,7 @@ const FullView = () => {
     <View style={styles.container}>
       <View style={styles.mapContainer}>
         <MapView
-          provider={PROVIDER_GOOGLE}
+          provider={Platform.OS === 'ios' ? undefined : PROVIDER_GOOGLE}
           style={styles.map}
           showsUserLocation={true}
           showsMyLocationButton={true}
@@ -211,7 +223,9 @@ const FullView = () => {
             {/* Additional info rows */}
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Date and Time: </Text>
-              <Text>{event.date_time ? formatDateTime(event.date_time) : "N/A"}</Text>
+              <Text>
+                {event.date_time ? formatDateTime(event.date_time) : "N/A"}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Title: </Text>
@@ -227,32 +241,57 @@ const FullView = () => {
                 {event.duration_hours ? `${event.duration_hours} Hours` : "N/A"}
               </Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Sponsors: </Text>
-              {event.sponsors && event.sponsors.length > 0 ? (
+            {/* <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Sponsors: </Text> */}
+            {/* {event.sponsors && event.sponsors.length > 0 ? (
                 event.sponsors.map((sponsor, index) => (
                   <Text key={index}>{sponsor.name}</Text>
                 ))
               ) : (
                 <Text>None</Text>
-              )}
-            </View>
+              )} */}
+            {/* </View> */}
             <View style={styles.links}>
-              <Text style={styles.infoLabel}>Other Links: </Text>
-              {event.otherLinks && event.otherLinks.length > 0 ? (
-                event.otherLinks.map((link, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() =>
-                      navigation.navigate("maps/linkWeb", { link: link.url })
-                    }
-                  >
-                    <Text style={styles.linkText}>{link.title}</Text>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <Text>No Links Available</Text>
-              )}
+                <Text style={styles.infoLabel}>Other Links: </Text>
+                {event.otherLinks && event.otherLinks.length > 0 ? (
+                  event.otherLinks.map((link, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() =>
+                        navigation.navigate("maps/linkWeb", { link: link.url })
+                      }
+                    >
+                      <Text style={styles.linkText}>{link.title}</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text>No Links Available</Text>
+                )}
+              </View>
+            <View style={styles.infoRow}>
+              <View style={styles.infoColumn}>
+                <Text style={styles.infoLabel}>Sponsors:</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.imageScrollContainer}
+                >
+                  {event.sponsor_images_urls &&
+                  event.sponsor_images_urls.length > 0 ? (
+                    event.sponsor_images_urls.map((imageRef, index) => (
+                      <View key={index} style={styles.imageContainer}>
+                        <Image
+                          source={{ uri: imageRef }}
+                          style={styles.sponsorImage}
+                          resizeMode="contain"
+                        />
+                      </View>
+                    ))
+                  ) : (
+                    <Text>None</Text>
+                  )}
+                </ScrollView>
+              </View>
             </View>
           </ScrollView>
         </Animated.View>
@@ -276,10 +315,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: "100%", // Full height
+    height: "120%", // Full height
     backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    paddingHorizontal: 10,
+    borderWidth: 3,
+    borderColor: "green",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -288,10 +330,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    borderLeftWidth: 1,
+    borderRightWidth: 1
   },
   infoTitle: {
     fontSize: 18,
     fontWeight: "bold",
+    textAlign: "center",
     padding: 16,
   },
   infoScroll: {
@@ -305,11 +350,26 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   links: {
-    marginTop: 20,
+    marginTop: 1,
   },
   linkText: {
     color: "blue",
     textDecorationLine: "underline",
+  },
+  imageScrollContainer: {
+    marginTop: 10,
+  },
+  imageContainer: {
+    marginRight: 10,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  sponsorImage: {
+    width: 100,
+    height: 100,
+  },
+  infoColumn: {
+    marginTop: 1
   },
 });
 

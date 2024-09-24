@@ -74,7 +74,6 @@ const technical = () => {
     try {
       const headers = { Authorization: `Bearer ${authState.token}`, "ngrok-skip-browser-warning": "true" };
 
-      console.log({ ...formData, hasSignedTechnicalAgreement: isAgreementChecked, haveCurrentEmployees: options.find(option => option.id === selectedId3)?.state , haveCurrentInvestors: options.find(option => option.id === selectedId)?.state, haveDebts: options.find(option => option.id === selectedId2)?.state})
      
       const response = await axi.patch(
         `/pitch/update-pitch/${id}/technical_agreement`,
@@ -123,7 +122,7 @@ const technical = () => {
             Professional Background <AntDesign name="right" size={13} color="black" />
           </Text>
           <Text style={styles.pageLinkText}>
-            Competition Questions <AntDesign name="right" size={15} color="black" />
+            Competition Questions <AntDesign name="right" size={13} color="black" />
           </Text>
           <Text style={styles.activePageLinkText}>
               Technical Questions{" "}
@@ -273,13 +272,12 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 100, // Ensure there's space for the button
-    paddingTop: 30,
+    paddingTop: 10,
   },
   pageLinks: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 20,
   },
   pageLinkText: {
     fontSize: 13,

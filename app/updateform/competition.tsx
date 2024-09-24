@@ -177,12 +177,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingHorizontal: 30,
   },
   scrollContainer: {
     flexGrow: 1,
     paddingBottom: 100, // Ensure there's space for the button
     paddingTop: 30,
+    paddingHorizontal: 30
   },
   pageLinks: {
     display: "flex",

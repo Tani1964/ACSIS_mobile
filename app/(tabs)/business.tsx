@@ -12,9 +12,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions
 } from "react-native";
 import Header from "../../components/header";
 import { axi, useAuth } from "../context/AuthContext";
+import MainAdvert from "@/components/mainAdvert";
 
 const Business = () => {
   const [user, setUser] = useState(null);
@@ -31,14 +33,12 @@ const Business = () => {
   });
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState("");
+  const { width, height } = useWindowDimensions();
 
   const fetchUser = async () => {
     try {
       const headers = { Authorization: `Bearer ${authState.token}` };
-      console.log(headers);
       const res = await axi.get("/user", { headers });
-      setUser(res.data.user);
-      console.log(res.data);
     } catch (error) {
       console.error(error);
     }
@@ -50,7 +50,6 @@ const Business = () => {
 
       setData(response.data);
     } catch (error) {
-      console.log("Error fetching data:", error);
 
       let errorMessage = "Failed to load business data";
       if (error.response) {
@@ -149,7 +148,6 @@ const Business = () => {
       Alert.alert("Success", "Meeting scheduled successfully!");
       closeScheduleModal();
     } catch (error) {
-      console.log("Error scheduling meeting:", error);
       const statusCode = error.response.status;
       if (statusCode === 401) {
         Alert.alert(
@@ -177,116 +175,140 @@ const Business = () => {
   return (
     <View style={styles.container}>
       <Header />
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Search businesses"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      {filteredData.length === 0 ? (
-        <Text style={styles.emptyText}>No businesses found.</Text>
-      ) : (
-        <ScrollView
-          style={styles.scrollView}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          {authState.authenticated &&( <View style={styles.filterContainer}>
-          {["", "Scheduled", "Open"].map((mode) => (
-            <TouchableOpacity
-              key={mode}
-              style={[
-                styles.filterButton,
-                selectedFilter === mode && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedFilter(mode)}
+      <View>
+        <View style={styles.innerContainer}>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search businesses"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {filteredData.length === 0 ? (
+            <Text style={styles.emptyText}>No businesses found.</Text>
+          ) : (
+            <ScrollView
+              style={[styles.scrollView, { height: height * 0.55 }]}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
             >
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  selectedFilter === mode && styles.filterButtonTextActive,
-                ]}
-              >
-                {mode || "All Meetings"}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>)}
-          {filteredData.map((item) => {
-            let isUserInBusiness = item.received_meetings.some(
-              (meeting) => meeting.proposer.full_name === user?.full_name
-            );
-            !authState.authenticated && (isUserInBusiness = false)
-
-            if (
-              (selectedFilter.toLowerCase() === "scheduled" && !isUserInBusiness) ||
-              (selectedFilter.toLowerCase() === "open" && isUserInBusiness)
-            ) {
-              return null; // Return null instead of an empty string to avoid React warnings
-            }
-          
-
-            return (
-              <View key={item.id} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.iconContainer}>
-                    <Ionicons name="business-sharp" size={24} color="white" />
-                  </View>
-                  <Text style={styles.companyName}>
-                    {item.business_name || "Unknown"}
-                  </Text>
-                </View>
-                <View>
-                  <View style={styles.detailRow}>
-                    <MaterialIcons
-                      name="description"
-                      size={20}
-                      color="#196100"
-                    />
-                    <Text style={styles.detailText}>
-                      {item.business_description}
-                    </Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <MaterialIcons name="person" size={20} color="#196100" />
-                    <Text style={styles.detailText}>
-                      {item.business_owner_name}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.detailRow}
-                    onPress={() =>
-                      navigation.navigate("maps/linkWeb", {
-                        link: item.website,
-                      })
-                    }
-                  >
-                    <MaterialIcons name="language" size={20} color="#196100" />
-                    <Text style={styles.detailText}>{item.website}</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.actionButtons}>
-                  {!isUserInBusiness && (
+              {authState.authenticated && (
+                <View style={styles.filterContainer}>
+                  {["", "Scheduled", "Open"].map((mode) => (
                     <TouchableOpacity
-                      style={styles.button}
-                      onPress={() => openScheduleModal(item)}
+                      key={mode}
+                      style={[
+                        styles.filterButton,
+                        selectedFilter === mode && styles.filterButtonActive,
+                      ]}
+                      onPress={() => setSelectedFilter(mode)}
                     >
-                      <Text style={styles.buttonText}>
-                        Create Meeting Proposal
+                      <Text
+                        style={[
+                          styles.filterButtonText,
+                          selectedFilter === mode &&
+                            styles.filterButtonTextActive,
+                        ]}
+                      >
+                        {mode || "All Meetings"}
                       </Text>
                     </TouchableOpacity>
-                  )}
-                  {isUserInBusiness && (
-                    <Text style={styles.scheduledText}>Meeting Scheduled</Text>
-                  )}
+                  ))}
                 </View>
-              </View>
-            );
-          })}
-        </ScrollView>
-      )}
+              )}
+              {filteredData.map((item) => {
+                let isUserInBusiness = item.received_meetings.some(
+                  (meeting) => meeting.proposer.full_name === user?.full_name
+                );
+                !authState.authenticated && (isUserInBusiness = false);
 
+                if (
+                  (selectedFilter.toLowerCase() === "scheduled" &&
+                    !isUserInBusiness) ||
+                  (selectedFilter.toLowerCase() === "open" && isUserInBusiness)
+                ) {
+                  return null; // Return null instead of an empty string to avoid React warnings
+                }
+
+                return (
+                  <View key={item.id} style={styles.card}>
+                    <View style={styles.cardHeader}>
+                      <View style={styles.iconContainer}>
+                        <Ionicons
+                          name="business-sharp"
+                          size={24}
+                          color="white"
+                        />
+                      </View>
+                      <Text style={styles.companyName}>
+                        {item.business_name || "Unknown"}
+                      </Text>
+                    </View>
+                    <View>
+                      <View style={styles.detailRow}>
+                        <MaterialIcons
+                          name="description"
+                          size={20}
+                          color="#196100"
+                        />
+                        <Text style={styles.detailText}>
+                          {item.business_description}
+                        </Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <MaterialIcons
+                          name="person"
+                          size={20}
+                          color="#196100"
+                        />
+                        <Text style={styles.detailText}>
+                          {item.business_owner_name}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.detailRow}
+                        onPress={() =>
+                          navigation.navigate("maps/linkWeb", {
+                            link: item.website,
+                          })
+                        }
+                      >
+                        <MaterialIcons
+                          name="language"
+                          size={20}
+                          color="#196100"
+                        />
+                        <Text style={styles.detailText}>{item.website}</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.actionButtons}>
+                      {!isUserInBusiness && (
+                        <TouchableOpacity
+                          style={styles.button}
+                          onPress={() => openScheduleModal(item)}
+                        >
+                          <Text style={styles.buttonText}>
+                            Create Meeting Proposal
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {isUserInBusiness && (
+                        <Text style={styles.scheduledText}>
+                          Meeting Scheduled
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+              <View style={{ height: 100 }} />
+            </ScrollView>
+          )}
+        </View>
+        <View style={styles.sponsors}>
+          <MainAdvert filter={"business"} />
+        </View>
+      </View>
       <Modal
         visible={modalVisible}
         transparent={true}
@@ -353,8 +375,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f8f8",
     paddingBottom: 100,
   },
+  innerContainer: {
+    marginTop: 110,
+  },
   scrollView: {
     paddingHorizontal: 10,
+    marginBottom: -80,
+    height: "90%",
   },
   searchBar: {
     height: 40,
@@ -393,10 +420,11 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "white",
     borderRadius: 60,
-    padding: 25,
+    paddingHorizontal: 25,
+    paddingVertical: 14,
     marginVertical: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 30 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
     elevation: 5,
@@ -428,10 +456,10 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     marginTop: 8,
-    display:"flex",
+    display: "flex",
     flexDirection: "row",
     justifyContent: "center",
-    width: "100%"
+    width: "100%",
   },
   button: {
     backgroundColor: "#196100",
@@ -439,7 +467,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 20,
     width: "90%",
-    alignSelf:"center"
+    alignSelf: "center",
   },
   buttonText: {
     color: "white",
@@ -525,5 +553,16 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
     color: "#333",
+  },
+  sponsors: {
+    position: "absolute", // Absolute positioning to overlap the WebView
+    top: 0, // Adjust as needed to control the overlap position
+    left: 0,
+    right: 0,
+    height: "14%", // Adjust height as needed
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white", // Semi-transparent background to overlap but still show the WebView content
+    zIndex: 1, // Ensure it appears above the WebView
   },
 });

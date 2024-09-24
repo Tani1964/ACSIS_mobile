@@ -8,16 +8,17 @@ import {
   TouchableOpacity,
   RefreshControl,
   Image,
+  useWindowDimensions,
 } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
 import { axi, useAuth } from "../../context/AuthContext";
-import ActionButton from "../../../components/actionButton";
 import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
-import { Link } from "expo-router";
+import MainAdvert from "@/components/mainAdvert";
 
 const PitchList = () => {
+  const { width, height } = useWindowDimensions()
   const navigation = useNavigation();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +35,6 @@ const PitchList = () => {
         (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
       );
       setData(sortedData);
-      console.log("Data fetched successfully:", sortedData);
     } catch (error) {
       console.error("Error fetching data:", error);
       // Alert.alert("Error", "Failed to fetch pitch data.");
@@ -96,7 +96,7 @@ const PitchList = () => {
 
   if (data.length === 0) {
     return (
-      <View style={styles.body}>
+      <View style={[styles.body, { paddingHorizontal: width * 0.1 }]}>
         <View style={styles.imageContainer}>
           <Image
             source={require("../../../assets/images/pitch.png")}
@@ -104,17 +104,19 @@ const PitchList = () => {
           />
           <View style={styles.textContainer}>
             <Text style={styles.headerText}>You have no pitches yet</Text>
-            <Text style={{ color: "grey" }}>Whenever you pitch an idea, you can track its</Text>
+            <Text style={{ color: "grey" }}>
+              Whenever you pitch an idea, you can track its
+            </Text>
             <Text style={{ color: "grey" }}>progress here.</Text>
           </View>
         </View>
         <View>
-              <TouchableOpacity style={styles.link}
-              onPress={() => navigation.navigate("form/index")}>
-                <Text style={styles.linkText}>Pitch an idea</Text>
-              </TouchableOpacity>
-            
-          
+          <TouchableOpacity
+            style={styles.link}
+            onPress={() => navigation.navigate("form/index")}
+          >
+            <Text style={styles.linkText}>Pitch an idea</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -122,97 +124,113 @@ const PitchList = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.filterContainer}>
-        <Text style={styles.filterLabel}>Filter: </Text>
-        <Picker
-          selectedValue={filter}
-          style={styles.picker}
-          onValueChange={(itemValue) => setFilter(itemValue)}
-        >
-          <Picker.Item label="All" value="all" />
-          <Picker.Item label="Submitted" value="submitted" />
-          <Picker.Item label="Drafts" value="drafts" />
-        </Picker>
-      </View>
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {filteredData.map((item) => (
-          <View
-            key={item.id}
-            style={[
-              styles.card,
-              (item.review && item.review.review_status) === "not-submitted" && styles.notSubmitted,
-              (item.review && item.review.review_status) === "pending" && styles.pending,
-              (item.review && item.review.review_status) === "approved" && styles.approved,
-              (item.review && item.review.review_status) === "declined" && styles.rejected,
-            ]}
+      <View>
+        <View style={styles.filterContainer}>
+          <Text style={styles.filterLabel}>Filter: </Text>
+          <Picker
+            selectedValue={filter}
+            style={styles.picker}
+            onValueChange={(itemValue) => setFilter(itemValue)}
           >
-            <View style={styles.innerCard}>
-              <View style={styles.cardHeader}>
-                <Text>{new Date(item.updated_at).toLocaleDateString()}</Text>
-                {item.uid &&<Text style={{fontWeight: "bold", fontSize:20}}>{` #${
-                item.uid || ""
-              }`}</Text>}
-                {!item.is_submitted && (
-                  <AntDesign
-                    name="delete"
-                    size={24}
-                    color="black"
-                    onPress={() =>
-                      Alert.alert(
-                        "Confirm Delete",
-                        "Are you sure you want to delete this pitch?",
-                        [
-                          { text: "Cancel", style: "cancel" },
-                          {
-                            text: "Delete",
-                            onPress: () => deleteHandler(item.id),
-                          },
-                        ],
-                        { cancelable: true }
-                      )
-                    }
-                  />
-                )}
-              </View>
-              
-              <Text>{`"${
-                item.competition_questions?.business_name || "No Business Name"
-              }..."`}</Text>
-              <Text>{`"${
-                item.competition_questions?.business_description || "No description"
-              }..."`}</Text>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() =>
-                  navigation.navigate(
-                    item.is_submitted ? "dynamics/viewPitchInfo" : "updateform/personal",
-                    { itemId: item.id }
-                  )
-                }
-              >
-                <Text style={styles.actionButtonText}>
-                  {item.is_submitted ? "View Pitch Info" : "Edit Pitch"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.statusText}>
-              {item.review && item.review.review_status}
-            </Text>
-          </View>
-        ))}
-      </ScrollView>
-      <View style={styles.createButtonContainer}>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => navigation.navigate("form/index")}
+            <Picker.Item label="All" value="all" />
+            <Picker.Item label="Submitted" value="submitted" />
+            <Picker.Item label="Drafts" value="drafts" />
+          </Picker>
+        </View>
+        <ScrollView
+          style={[styles.scrollView, { height: height * 0.55 }]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
-          <Text style={styles.createButtonText}>Create new pitch</Text>
-        </TouchableOpacity>
+          {filteredData.map((item) => (
+            <View
+              key={item.id}
+              style={[
+                styles.card,
+                (item.review && item.review.review_status) ===
+                  "not-submitted" && styles.notSubmitted,
+                (item.review && item.review.review_status) === "pending" &&
+                  styles.pending,
+                (item.review && item.review.review_status) === "approved" &&
+                  styles.approved,
+                (item.review && item.review.review_status) === "declined" &&
+                  styles.rejected,
+              ]}
+            >
+              <View style={styles.innerCard}>
+                <View style={styles.cardHeader}>
+                  <Text>{new Date(item.updated_at).toLocaleDateString()}</Text>
+                  {item.uid && (
+                    <Text style={{ fontWeight: "bold", fontSize: 20 }}>{` #${
+                      item.uid || ""
+                    }`}</Text>
+                  )}
+                  {!item.is_submitted && (
+                    <AntDesign
+                      name="delete"
+                      size={24}
+                      color="black"
+                      onPress={() =>
+                        Alert.alert(
+                          "Confirm Delete",
+                          "Are you sure you want to delete this pitch?",
+                          [
+                            { text: "Cancel", style: "cancel" },
+                            {
+                              text: "Delete",
+                              onPress: () => deleteHandler(item.id),
+                            },
+                          ],
+                          { cancelable: true }
+                        )
+                      }
+                    />
+                  )}
+                </View>
+
+                <Text>{`"${
+                  item.competition_questions?.business_name ||
+                  "No Business Name"
+                }..."`}</Text>
+                <Text>{`"${
+                  item.competition_questions?.business_description ||
+                  "No description"
+                }..."`}</Text>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() =>
+                    navigation.navigate(
+                      item.is_submitted
+                        ? "dynamics/viewPitchInfo"
+                        : "updateform/personal",
+                      { itemId: item.id }
+                    )
+                  }
+                >
+                  <Text style={styles.actionButtonText}>
+                    {item.is_submitted ? "View Pitch Info" : "Edit Pitch"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.statusText}>
+                {item.review && item.review.review_status}
+              </Text>
+            </View>
+          ))}
+          <View style={{ height: 100 }} />
+        </ScrollView>
+        <View style={styles.createButtonContainer}>
+          <TouchableOpacity
+            style={styles.createButton}
+            onPress={() => navigation.navigate("form/index")}
+          >
+            <Text style={styles.createButtonText}>Create new pitch</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.sponsors}>
+        <MainAdvert filter={"pitch"} />
       </View>
     </View>
   );
@@ -230,6 +248,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
+    marginTop: 120,
   },
   filterLabel: {
     fontSize: 16,
@@ -241,7 +260,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     paddingHorizontal: 10,
-    paddingBottom: 200,
+    marginBottom: -30,
+    // paddingBottom: 300,
+    height: "60%"
   },
   card: {
     borderRadius: 10,
@@ -299,7 +320,7 @@ const styles = StyleSheet.create({
   createButtonContainer: {
     padding: 20,
     backgroundColor: "white",
-    marginBottom: 10
+    marginBottom: 10,
   },
   createButton: {
     backgroundColor: "#196100",
@@ -365,5 +386,19 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     textAlign: "center",
+  },
+  innerContainer: {
+    marginTop: "1%",
+  },
+  sponsors: {
+    position: "absolute", // Absolute positioning to overlap the WebView
+    top: 0, // Adjust as needed to control the overlap position
+    left: 0,
+    right: 0,
+    height: "14%", // Adjust height as needed
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white", // Semi-transparent background to overlap but still show the WebView content
+    zIndex: 1, // Ensure it appears above the WebView
   },
 });

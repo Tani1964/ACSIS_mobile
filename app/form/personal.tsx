@@ -82,7 +82,6 @@ const Personal = () => {
     try {
       const headers = {
         Authorization: `Bearer ${authState.token}`,
-        'ngrok-skip-browser-warning': 'true',
       };
       const newFormData = { ...formData, gender: genderOptions.find(option => option.id === selectedId)?.value, requiresDisabilitySupport: disabilityOptions.find(option => option.id === selectedId2)?.state };
       
@@ -141,9 +140,9 @@ const Personal = () => {
                 Professional Background <AntDesign name="right" size={13} color="black" />
               </Text>
               <Text style={styles.headerText}>
-                Competition Questions <AntDesign name="right" size={15} color="black" />
+                Competition Questions <AntDesign name="right" size={13} color="black" />
               </Text>
-              <Text style={styles.pageLinkText}>
+              <Text style={styles.headerText}>
                 Technical Questions <AntDesign name="right" size={13} color="black" />
               </Text>
             </View>
@@ -179,6 +178,8 @@ const Personal = () => {
             <View style={styles.inputContainer}>
               <Pressable onPress={toggleDatePicker} style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <AntDesign name="calendar" size={24} color="lightgrey" />
+                <Text style={{ color: 'grey' }}>      </Text>
+                <Text style={{ color: 'grey' }}>Date Of Birth:</Text>
                 <TextInput
                   style={styles.inputField}
                   placeholder="Date of Birth"
@@ -186,7 +187,6 @@ const Personal = () => {
                   editable={false}
                   pointerEvents="none"
                 />
-                <Text style={{ color: 'grey' }}>D.O.B</Text>
               </Pressable>
               {showPicker && (
                 <DateTimePicker
@@ -220,7 +220,7 @@ const Personal = () => {
               <MaterialCommunityIcons name="account-group-outline" size={24} color="lightgrey" />
               <TextInput
                 style={styles.inputField}
-                placeholder="Ethnicity"
+                placeholder="Ethnicity (e.g. Black, White, Asian, Hispanic, Native American etc...)"
                 value={formData.ethnicity}
                 onChangeText={newText => setFormData(prevState => ({ ...prevState, ethnicity: newText }))}
               />

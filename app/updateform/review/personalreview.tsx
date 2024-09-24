@@ -72,7 +72,7 @@ const PersonalReviewScreen = () => {
        
         <Text style={styles.header}>Personal Information</Text>
       </View>
-      <ScrollView>
+      <ScrollView style={styles.scrollContainer}>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Full Name</Text>
@@ -187,6 +187,7 @@ const PersonalReviewScreen = () => {
             {data.disability_support_description}
           </Text>
         </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
       <View style={styles.actionButtonContainer}>
         <TouchableOpacity
@@ -214,13 +215,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingHorizontal: 30,
+  },scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 100, // Ensure there's space for the button
+    paddingTop: 30,
+    paddingHorizontal: 30
   },
   header: {
     fontSize: 18,
     fontWeight: "bold",
     marginTop: 20,
     marginBottom: 10,
+    paddingHorizontal:10
   },
   infoItem: {
     borderBottomColor: "lightgrey",

@@ -10,12 +10,12 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
+  useWindowDimensions
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
-import { useAuth } from "../context/AuthContext";
 import Header from "../../components/header";
-import * as SecureStore from "expo-secure-store";
+import MainAdvert from "@/components/mainAdvert";
 
 const formatDateTime = (dateTimeString) => {
   const date = new Date(dateTimeString);
@@ -34,6 +34,7 @@ const Events = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
+  const { width, height } = useWindowDimensions();
 
   const fetchData = async () => {
     try {
@@ -130,128 +131,149 @@ const Events = () => {
   return (
     <View style={styles.container}>
       <Header />
-      <TextInput
-        style={styles.input}
-        placeholder="Search events"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <View style={styles.filterContainer}>
-          {["", "Day 1", "Day 2", "Day 3"].map((day) => (
-            <TouchableOpacity
-              key={day}
-              style={[
-                styles.filterButton,
-                selectedDay === day && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedDay(day)}
-            >
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  selectedDay === day && styles.filterButtonTextActive,
-                ]}
-              >
-                {day || "All Days"}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        {filteredEvents.length === 0 ? (
-          <Text style={styles.emptyText}>No events found.</Text>
-        ) : (
-          filteredEvents.map((event) => (
-            <View
-              key={event.id}
-              style={styles.card}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-            >
-              <View style={styles.cardHeader}>
-                
-                
-              </View>
-              <View style={{display:"flex", flexDirection:"row",alignItems:"center",justifyContent:"space-between" }}>
-                <View style={{display:"flex", flexDirection:"column", justifyContent:"space-between", gap:8 }}>
-                <Text style={styles.eventName}>
-                  {event.title || "Unnamed Event"}
-                </Text>
-                <Text>{event.day && `Day ${event.day}`}</Text>
-                  <Text style={styles.dateText}>
-                    {formatDateTime(event.date_time)}
+      <View>
+        <View style={styles.innerContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Search events"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          <ScrollView
+            style={[styles.scrollView, { height: height * 0.6 }]}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+            <View style={styles.filterContainer}>
+              {["", "Day 1", "Day 2", "Day 3"].map((day) => (
+                <TouchableOpacity
+                  key={day}
+                  style={[
+                    styles.filterButton,
+                    selectedDay === day && styles.filterButtonActive,
+                  ]}
+                  onPress={() => setSelectedDay(day)}
+                >
+                  <Text
+                    style={[
+                      styles.filterButtonText,
+                      selectedDay === day && styles.filterButtonTextActive,
+                    ]}
+                  >
+                    {day || "All Days"}
                   </Text>
-                  <Text style={styles.location}>{event.location}</Text>
-                  {/* <Text style={styles.timeText}>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {filteredEvents.length === 0 ? (
+              <Text style={styles.emptyText}>No events found.</Text>
+            ) : (
+              filteredEvents.map((event) => (
+                <View
+                  key={event.id}
+                  style={styles.card}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={onRefresh}
+                    />
+                  }
+                >
+                  <View style={styles.cardHeader}></View>
+                  <View
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <View
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        gap: 8,
+                      }}
+                    >
+                      <Text style={styles.eventName}>
+                        {event.title || "Unnamed Event"}
+                      </Text>
+                      <Text>{event.day && `Day ${event.day}`}</Text>
+                      <Text style={styles.dateText}>
+                        {formatDateTime(event.date_time)}
+                      </Text>
+                      <Text style={styles.location}>{event.location}</Text>
+                      {/* <Text style={styles.timeText}>
                     Expected duration: {event.duration_hours} hours
                   </Text> */}
-                </View>
-                <View style={styles.imgContainer}>
-                  <TouchableOpacity
-                  // onPress={() =>
-                  //   navigation.navigate("maps/fullView", {
-                  //     location2: event.location,
-                  //     eventID: event.id,
-                  //   })
-                  // }
-                  >
-                    <Image
-                      source={{ uri: event.image_url }}
-                      style={styles.eventImage}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={styles.venueContainer}>
-                <View style={styles.venueDetails}>
-                  {/* <Text style={styles.venueName}>{event.description}</Text> */}
-                  
-                </View>
-              </View>
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={() => {
-                    if (event.registrationLink) {
-                      navigation.navigate("maps/linkWeb", {
-                        link: event.registrationLink,
-                      });
-                    } else {
-                      Alert.alert("Info", "No need to register.");
-                    }
-                  }}
-                >
-                  <Text style={styles.buttonText}>Register</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.buttonSec}
-                  onPress={async () => {
-                    //   try {
-                    //     await SecureStore.setItemAsync("location", event.location);
-                    // } catch (error) {
-                    //     console.error("Error saving location:", error);
-                    // }
+                    </View>
+                    <View style={styles.imgContainer}>
+                      <TouchableOpacity
+                      // onPress={() =>
+                      //   navigation.navigate("maps/fullView", {
+                      //     location2: event.location,
+                      //     eventID: event.id,
+                      //   })
+                      // }
+                      >
+                        <Image
+                          source={{ uri: event.image_url }}
+                          style={styles.eventImage}
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={styles.venueContainer}>
+                    <View style={styles.venueDetails}>
+                      {/* <Text style={styles.venueName}>{event.description}</Text> */}
+                    </View>
+                  </View>
+                  <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                      style={styles.button}
+                      onPress={() => {
+                        if (event.registrationLink) {
+                          navigation.navigate("maps/linkWeb", {
+                            link: event.registrationLink,
+                          });
+                        } else {
+                          Alert.alert("Info", "No need to register.");
+                        }
+                      }}
+                    >
+                      <Text style={styles.buttonText}>Register</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.buttonSec}
+                      onPress={async () => {
+                        //   try {
+                        //     await SecureStore.setItemAsync("location", event.location);
+                        // } catch (error) {
+                        //     console.error("Error saving location:", error);
+                        // }
 
-                    navigation.navigate("maps/fullView", {
-                      eventID: event.id,
-                      location2: event.location,
-                    });
-                  }}
-                >
-                  <Text style={styles.buttonTextSec}>More Info</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
-        )}
-      </ScrollView>
+                        navigation.navigate("maps/fullView", {
+                          eventID: event.id,
+                          location2: event.location,
+                        });
+                      }}
+                    >
+                      <Text style={styles.buttonTextSec}>More Info</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+             <View style={{ height: 100 }} />
+          </ScrollView>
+        </View>
+        <View style={styles.sponsors}>
+          <MainAdvert filter={"event"} />
+        </View>
+      </View>
     </View>
   );
 };
@@ -264,8 +286,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f8f8",
     paddingBottom: 90,
   },
+  innerContainer: {
+    marginTop: 110,
+  },
   scrollView: {
     paddingHorizontal: 10,
+    marginBottom: -80,
   },
   input: {
     height: 40,
@@ -304,10 +330,11 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "white",
     borderRadius: 60,
-    padding: 25,
+    paddingHorizontal: 25,
+    paddingVertical: 14,
     marginVertical: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 40 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
     elevation: 5,
@@ -335,8 +362,7 @@ const styles = StyleSheet.create({
   },
   eventImage: {
     width: 100,
-    height: 100,
-    borderRadius: 100, // Half of width/height to make it round
+    height: 100, // Half of width/height to make it round
   },
   venueContainer: {
     flexDirection: "row",
@@ -365,14 +391,13 @@ const styles = StyleSheet.create({
     width: 100, // Match the dimensions to the image
     height: 100,
     borderColor: "#196100",
-    marginRight: 15
+    marginRight: 15,
   },
   button: {
     backgroundColor: "#196100",
     paddingVertical: 10,
     paddingHorizontal: 25,
     borderRadius: 20,
-
   },
   buttonText: {
     color: "white",
@@ -386,13 +411,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 25,
     borderRadius: 20,
-    marginRight:10
+    marginRight: 10,
   },
   buttonTextSec: {
     color: "#196100",
     fontSize: 14,
     fontWeight: "bold",
-    
   },
   loadingContainer: {
     flex: 1,
@@ -405,5 +429,16 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 20,
+  },
+  sponsors: {
+    position: "absolute", // Absolute positioning to overlap the WebView
+    top: 0, // Adjust as needed to control the overlap position
+    left: 0,
+    right: 0,
+    height: "14%", // Adjust height as needed
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white", // Semi-transparent background to overlap but still show the WebView content
+    zIndex: 1, // Ensure it appears above the WebView
   },
 });

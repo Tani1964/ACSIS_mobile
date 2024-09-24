@@ -12,9 +12,7 @@ import React, { useState, useLayoutEffect, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { axi, useAuth } from "../../context/AuthContext";
 import { useRoute } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const TechnicalReview = () => {
   const navigation = useNavigation();
@@ -86,7 +84,7 @@ const TechnicalReview = () => {
         
         <Text style={styles.header}>Technical Questions</Text>
       </View>
-      <ScrollView>
+      <ScrollView style={styles.scrollContainer}>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>
@@ -134,6 +132,7 @@ const TechnicalReview = () => {
           </View>
           <Text style={styles.infoValue}>{data.have_debts ? "Yes" : "No"}</Text>
         </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
       <View style={styles.actionButtonContainer}>
         <TouchableOpacity
@@ -158,13 +157,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingHorizontal: 30,
   },
   header: {
     fontSize: 18,
     fontWeight: "bold",
     marginTop: 20,
     marginBottom: 10,
+    paddingHorizontal: 10,
+  },scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 100, // Ensure there's space for the button
+    paddingTop: 30,
+    paddingHorizontal: 30
   },
   infoItem: {
     borderBottomColor: "lightgrey",
@@ -178,7 +182,7 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontWeight: "bold",
-    width: 70
+    width: 100
   },
   editButton: {
     flexDirection: "row",

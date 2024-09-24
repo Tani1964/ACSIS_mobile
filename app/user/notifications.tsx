@@ -35,7 +35,6 @@ const Account = () => {
       const response = await axi.get("/user")
       setUser(response.data);
       setNotificationsEnabled(response.data.user.pitch_notification_status);
-      console.log(response.data.user.pitch_notification_status)
     };
     getUser();
   }, []);

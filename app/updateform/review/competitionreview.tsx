@@ -1,4 +1,11 @@
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import ActionButton from "@/components/actionButton";
 import { Link } from "expo-router";
@@ -9,7 +16,6 @@ import { useLocalSearchParams } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 
 const competitionReview = () => {
   const navigation = useNavigation();
@@ -49,22 +55,21 @@ const competitionReview = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{display:"flex"}}>
-     
-      <Text style={styles.header}>Competition Questions</Text>
+      <View style={{ display: "flex", paddingHorizontal: 10 }}>
+        <Text style={styles.header}>Competition Questions</Text>
       </View>
-      <ScrollView>
+      <ScrollView style={styles.scrollContainer}>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>
               Please provide a brief description of your business
             </Text>
-            {/* <View style={styles.editButton}>
+            <View style={styles.editButton}>
               <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View> */}
+            </View>
           </View>
           <Text style={styles.infoValue}>{data.business_description}</Text>
         </View>
@@ -73,12 +78,12 @@ const competitionReview = () => {
             <Text style={styles.infoLabel}>
               Why are you interested in this competition?
             </Text>
-            {/* <View style={styles.editButton}>
+            <View style={styles.editButton}>
               <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View> */}
+            </View>
           </View>
           <Text style={styles.infoValue}>{data.reason_of_interest}</Text>
         </View>
@@ -87,14 +92,16 @@ const competitionReview = () => {
             <Text style={styles.infoLabel}>
               How do you plan to use the investment prize if you win?
             </Text>
-            {/* <View style={styles.editButton}>
+            <View style={styles.editButton}>
               <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View> */}
+            </View>
           </View>
-          <Text style={styles.infoValue}>{data.investment_prize_usage_plan}</Text>
+          <Text style={styles.infoValue}>
+            {data.investment_prize_usage_plan}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -102,14 +109,16 @@ const competitionReview = () => {
               What impact do you hope to achieve with investment into your
               vision?
             </Text>
-            {/* <View style={styles.editButton}>
+            <View style={styles.editButton}>
               <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View> */}
+            </View>
           </View>
-          <Text style={styles.infoValue}>{data.impact_plan_with_investment_prize}</Text>
+          <Text style={styles.infoValue}>
+            {data.impact_plan_with_investment_prize}
+          </Text>
         </View>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
@@ -117,22 +126,24 @@ const competitionReview = () => {
               Please provide a short summary of why you should be given the
               opportunity to be on PITCH IT TO CLINCH IT
             </Text>
-            {/* <View style={styles.editButton}>
+            <View style={styles.editButton}>
               <Link href="/updateform/competition">
                 <AntDesign name="edit" size={24} color="#196100" />
                 <Text style={styles.editText}>Edit</Text>
               </Link>
-            </View> */}
+            </View>
           </View>
-          <Text style={styles.infoValue}>{data.summary_of_why_you_should_participate}</Text>
+          <Text style={styles.infoValue}>
+            {data.summary_of_why_you_should_participate}
+          </Text>
         </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
       <View style={styles.actionButtonContainer}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() =>(
+          onPress={() =>
             navigation.navigate("updateform/review/technicalReview", { id: id })
-            )
           }
           disabled={loading}
         >
@@ -152,38 +163,43 @@ export default competitionReview;
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "white",
-    paddingHorizontal: 30,
+    height: "100%",
   },
   header: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 10,
+    marginVertical: 20,
   },
-  infoItem: {
+  contentContainer: {
+    flexDirection: "column",
+    justifyContent: "space-between",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 100, // Ensure there's space for the button
+    paddingTop: 30,
+    paddingHorizontal: 30,
+  },
+  section: {
     borderBottomColor: "lightgrey",
     borderBottomWidth: 1,
     paddingVertical: 20,
   },
-  infoHeader: {
+  sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  infoLabel: {
+  sectionTitle: {
     fontWeight: "bold",
-    width: 70
   },
-  editButton: {
-    flexDirection: "row",
-    alignItems: "center",
+  sectionContent: {
+    marginTop: 8,
   },
   editText: {
     color: "#196100",
-    marginLeft: 5,
-  },
-  infoValue: {
-    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
   },
   actionButtonContainer: {
     padding: 20,
@@ -199,5 +215,26 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  infoItem: {
+    borderBottomColor: "lightgrey",
+    borderBottomWidth: 1,
+    paddingVertical: 20,
+  },
+  infoHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  infoLabel: {
+    fontWeight: "bold",
+    width: 100,
+  },
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  infoValue: {
+    marginTop: 8,
   },
 });

@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: -50, // Negative height to lift shadow upwards
+            height: -10, // Negative height to lift shadow upwards
         },
         shadowOpacity: 0.1,
         shadowRadius: 5,

@@ -58,11 +58,11 @@ const ProfessionalReview = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{ display: "flex" }}>
+      <View style={{ display: "flex", paddingHorizontal: 10 }}>
         
         <Text style={styles.header}>Professional Background</Text>
       </View>
-      <ScrollView>
+      <ScrollView style={styles.scrollContainer}>
         <View style={styles.infoItem}>
           <View style={styles.infoHeader}>
             <Text style={styles.infoLabel}>Current Occupation</Text>
@@ -92,7 +92,7 @@ const ProfessionalReview = () => {
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() =>(
-            navigation.navigate("form/review/competitionreview", { id: id })
+            navigation.navigate("updateform/review/competitionreview", { id: id })
           )
           }
           disabled={loading}
@@ -113,7 +113,6 @@ export default ProfessionalReview;
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "white",
-    paddingHorizontal: 30,
     height: "100%",
   },
   header: {
@@ -124,7 +123,11 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexDirection: "column",
     justifyContent: "space-between",
-    paddingTop: 20,
+  },scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 100, // Ensure there's space for the button
+    paddingTop: 30,
+    paddingHorizontal: 30
   },
   section: {
     borderBottomColor: "lightgrey",
