@@ -10,7 +10,7 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
-  useWindowDimensions
+  useWindowDimensions,
 } from "react-native";
 import Header from "../../components/header";
 import { axi, useAuth } from "../context/AuthContext";
@@ -34,7 +34,7 @@ const Votes = () => {
   const [nominationSuggestions, setNominationSuggestions] = useState([]);
   const [nominee, setNominee] = useState(null);
   const [nomineeType, setNomineeType] = useState("");
-
+  const [pitchNames, setPitchNames] = useState({});
   const [buttonLoader, setButtonLoader] = useState(false);
 
   const { width, height } = useWindowDimensions();
@@ -58,7 +58,7 @@ const Votes = () => {
   const fetchData = async () => {
     try {
       const headers = { Authorization: `Bearer ${authState.token}` };
-      const response = await axi.get("/award/get-awards", { headers });
+      const response = await axi.get("/award/get-awards");
       setVotingData(response.data.awards);
       setNominations(response.data.nominations);
     } catch (error) {
@@ -114,6 +114,37 @@ const Votes = () => {
     fetchData();
   }, []);
 
+  const getPitch = async (id) => {
+    try {
+      const response = await axi.get(`/pitch/get-pitch/${id}`);
+
+      // Assuming the response contains a data object with the pitch information
+      const pitchName = response.data.pitch.competition_questions.business_name; // Adjust 'name' based on actual API response structure
+      return pitchName;
+    } catch (error) {
+      console.error("Error fetching pitch:", error);
+      throw error; // Optionally re-throw the error for further handling
+    }
+  };
+
+  const fetchPitches = useCallback(async (award) => {
+    const pitches = {};
+    await Promise.all(
+      award.nominees.map(async (nominee) => {
+        if (nominee.pitch_nominee) {
+          try {
+            const pitchName = await getPitch(nominee.pitch_nominee.id);
+            pitches[nominee.pitch_nominee.id] = pitchName; // Store the fetched pitch name
+          } catch (err) {
+            console.error("Error fetching pitch name:", err);
+          }
+        }
+      })
+    );
+    
+    setPitchNames(pitches); // Set all fetched pitch names in one go
+  }, [votingData]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchData().finally(() => setRefreshing(false));
@@ -124,14 +155,17 @@ const Votes = () => {
     setModalVisible(true);
   };
 
-  const openVoteModal = (award) => {
-    setSelectedAward(award);
+  const openVoteModal = async (award) => {
+    setLoading(true);
+    await setSelectedAward(award);
     setVoteModalVisible(true);
+    setLoading(false);
   };
+  
 
   const submitNomination = async () => {
     if (nominationInput.trim() === "" || !nominee) {
-      Alert.alert("Error", "Please enter a company name to nominate.");
+      Alert.alert("", "Please enter a name to nominate.");
       return;
     }
 
@@ -143,7 +177,6 @@ const Votes = () => {
         awardId: selectedAward.id,
         reason: "",
       };
-      console.log(formData);
 
       await axi.post("/award/nominate-for-award", formData);
 
@@ -201,7 +234,7 @@ const Votes = () => {
         message = "An error occurred while setting up the request.";
       }
 
-      Alert.alert("Error", message);
+      Alert.alert("", message);
     } finally {
       setButtonLoader(false);
     }
@@ -227,12 +260,7 @@ const Votes = () => {
       );
       Alert.alert(
         "Vote Submitted",
-        `You voted for ${
-          selectedCompany?.business_nominee?.business_name ||
-          selectedCompany?.competition_questions?.business_name ||
-          selectedCompany?.full_name ||
-          "Unknown Nominee"
-        }`
+        `Voting successful...`
       );
     } catch (error) {
       let message =
@@ -276,7 +304,7 @@ const Votes = () => {
         message = "An error occurred while setting up the request.";
       }
 
-      Alert.alert("Error", message);
+      Alert.alert("", message);
     } finally {
       setVoteModalVisible(false);
       setSelectedCompany(null);
@@ -291,13 +319,11 @@ const Votes = () => {
     }
 
     try {
-      console.log(nominationInput);
       const headers = { Authorization: `Bearer ${authState.token}` };
       const response = await axi.get(
         `/user/get-search-by-query-string?type=business&query=${nominationInput}`,
         { headers }
       );
-      console.log(response.data.results);
       setNominationSuggestions(response.data.results || []);
     } catch (error) {
       console.error("Error fetching nomination suggestions:", error);
@@ -320,52 +346,58 @@ const Votes = () => {
           <MainAdvert filter={"award"} />
         </View>
         <ScrollView
-            style={[{ paddingHorizontal: 10, paddingVertical: 10, marginTop: 100},{ height: height * 0.63 }]}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-          >
-        {page === "votes" ? (
+          style={[
+            { paddingHorizontal: 10, paddingVertical: 10, marginTop: 100 },
+            { height: height * 0.63 },
+          ]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {page === "votes" ? (
             <View>
-            {votingData.map((award) => (
-              <View key={award.id} style={styles.awardContainer}>
-                <View style={styles.awardHeader}>
-                  <Text style={styles.awardTitle}>{award.title} 🏅</Text>
-                  {award.status === "nominations-open" ? (
-                    <TouchableOpacity
-                      style={styles.nominateButton}
-                      onPress={() => openNominationModal(award)}
-                    >
-                      <Text style={styles.nominateButtonText}>Nominate</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.nominateButton}
-                      onPress={() => openVoteModal(award)}
-                    >
-                      <Text style={styles.nominateButtonText}>Vote</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View>
-            {nominations.length === 0 && (
-              <Text>You haven't been Nominated Yet.</Text>
-            )}
-            {Array.isArray(nominations) &&
-              nominations.map((award) => (
+              {votingData.map((award) => (
                 <View key={award.id} style={styles.awardContainer}>
                   <View style={styles.awardHeader}>
                     <Text style={styles.awardTitle}>{award.title} 🏅</Text>
+                    {award.status === "nominations-open" ? (
+                      <TouchableOpacity
+                        style={styles.nominateButton}
+                        onPress={() => openNominationModal(award)}
+                      >
+                        <Text style={styles.nominateButtonText}>Nominate</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.nominateButton}
+                        onPress={async () => {
+                          await fetchPitches(award);
+                          openVoteModal(award);
+                        }}
+                      >
+                        <Text style={styles.nominateButtonText}>Vote</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               ))}
-          </View>
-        )}
-        <View style={{ height: 100 }} />
+            </View>
+          ) : (
+            <View>
+              {nominations.length === 0 && (
+                <Text>You haven't been Nominated Yet.</Text>
+              )}
+              {Array.isArray(nominations) &&
+                nominations.map((award) => (
+                  <View key={award.id} style={styles.awardContainer}>
+                    <View style={styles.awardHeader}>
+                      <Text style={styles.awardTitle}>{award.title} 🏅</Text>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          )}
+          <View style={{ height: 100 }} />
         </ScrollView>
       </View>
       {/* Nomination Modal */}
@@ -474,12 +506,17 @@ const Votes = () => {
                       },
                     ]}
                   >
-                    <Text>
-                      {nominee?.business_nominee?.business_name ||
-                        nominee?.competition_questions?.business_name ||
-                        nominee?.full_name ||
-                        "Unnamed Nominee"}
-                    </Text>
+                    {nominee?.pitch_nominee ? (
+                      <Text>
+                        {pitchNames[nominee?.pitch_nominee?.id] || "Loading..."}
+                      </Text>
+                    ) : (
+                      <Text>
+                        {nominee?.business_nominee?.business_name ||
+                          nominee?.user_nominee?.full_name ||
+                          "Unnamed Nominee"}
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 ))}
             </ScrollView>

@@ -9,7 +9,7 @@ import {
   ScrollView,
   
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons,FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "@/app/context/AuthContext"; // Ensure axi is correctly imported
 import { useAuth } from "@/app/context/AuthContext";
@@ -131,6 +131,12 @@ const Account = () => {
                 <Link href="auth/mainAuth/terms" style={styles.optionText}>Terms & privacy policy</Link>
               </TouchableOpacity>
             </View>
+            <View style={styles.section}>
+              
+              <TouchableOpacity style={styles.optionContainer}>
+                <Link href="auth/mainAuth/terms" style={styles.optionText}>Terms & privacy policy</Link>
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.section}>
               <TouchableOpacity
@@ -138,6 +144,10 @@ const Account = () => {
                 onPress={signOutHandler}
               >
                 <Text style={[styles.optionText, { color: "red" }]}>Sign Out</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.optionContainer}>
+                
+                <Link href="https://africancaribbeansummit.xyz/delete" style={[styles.optionText, {color: "red"}]}><FontAwesome name="warning" size={20} color={"red"} /> Delete Account</Link>
               </TouchableOpacity>
             </View>
           </View>

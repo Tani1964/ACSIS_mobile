@@ -183,16 +183,7 @@ const Business = () => {
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          {filteredData.length === 0 ? (
-            <Text style={styles.emptyText}>No businesses found.</Text>
-          ) : (
-            <ScrollView
-              style={[styles.scrollView, { height: height * 0.55 }]}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-            >
-              {authState.authenticated && (
+          {authState.authenticated && (
                 <View style={styles.filterContainer}>
                   {["", "Scheduled", "Open"].map((mode) => (
                     <TouchableOpacity
@@ -216,6 +207,16 @@ const Business = () => {
                   ))}
                 </View>
               )}
+          {filteredData.length === 0 ? (
+            <Text style={styles.emptyText}>No businesses found.</Text>
+          ) : (
+            <ScrollView
+              style={[styles.scrollView, { height: height * 0.55 }]}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            >
+              
               {filteredData.map((item) => {
                 let isUserInBusiness = item.received_meetings.some(
                   (meeting) => meeting.proposer.full_name === user?.full_name

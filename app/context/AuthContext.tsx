@@ -53,7 +53,9 @@ export const AuthProvider: React.FC = ({ children }) => {
   useEffect(() => {
     // Dynamically update axios headers whenever authState changes
     if (authState.token) {
-      axi.defaults.headers.common["Authorization"] = `Bearer ${authState.token}`;
+      axi.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${authState.token}`;
     } else {
       delete axi.defaults.headers.common["Authorization"];
     }

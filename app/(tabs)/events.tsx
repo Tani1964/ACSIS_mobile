@@ -139,13 +139,7 @@ const Events = () => {
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          <ScrollView
-            style={[styles.scrollView, { height: height * 0.6 }]}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-          >
-            <View style={styles.filterContainer}>
+          <View style={styles.filterContainer}>
               {["", "Day 1", "Day 2", "Day 3"].map((day) => (
                 <TouchableOpacity
                   key={day}
@@ -166,6 +160,13 @@ const Events = () => {
                 </TouchableOpacity>
               ))}
             </View>
+          <ScrollView
+            style={[styles.scrollView, { height: height * 0.6 }]}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+            
             {filteredEvents.length === 0 ? (
               <Text style={styles.emptyText}>No events found.</Text>
             ) : (
@@ -307,7 +308,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     gap: 20,
     marginBottom: 10,
-    paddingHorizontal: 2,
+    paddingHorizontal: 4,
+    marginHorizontal: 15
   },
   filterButton: {
     paddingVertical: 8,
