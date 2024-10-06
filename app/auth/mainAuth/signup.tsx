@@ -8,6 +8,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -84,98 +86,105 @@ const Signup = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Image
-            source={require("../../../assets/images/PNG File 1.png")}
-            style={styles.headerImage}
-          />
-          <Text style={styles.headerTitle}>Ready to Pitch your Ideas?</Text>
-          <Text style={styles.headerSubtitle}>
-            Enter your details to create your account
-          </Text>
-        </View>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={100} // Adjust this value based on your header height
+      >
+        <View style={styles.container}>
+          <View style={styles.headerContainer}>
+            <Image
+              source={require("../../../assets/images/PNG File 1.png")}
+              style={styles.headerImage}
+            />
+            <Text style={styles.headerTitle}>Ready to Pitch your Ideas?</Text>
+            <Text style={styles.headerSubtitle}>
+              Enter your details to create your account
+            </Text>
+          </View>
 
-        {/* Inputs */}
-        <View style={styles.inputsContainer}>
-          <View style={styles.inputContainer}>
-            <Ionicons name="person-outline" size={24} color="lightgrey" />
-            <TextInput
-              style={styles.inputField}
-              placeholder="Full name"
-              onChangeText={(newText) => setFullName(newText)}
-              value={fullName}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={24} color="lightgrey" />
-            <TextInput
-              style={styles.inputField}
-              placeholder="Email address"
-              onChangeText={(newText) => setEmail(newText)}
-              value={email}
-              keyboardType="email-address"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={24} color="lightgrey" />
-            <TextInput
-              style={styles.inputField}
-              placeholder="Password"
-              onChangeText={(newText) => setPassword(newText)}
-              value={password}
-              secureTextEntry={!passwordVisible} // Toggle secureTextEntry
-            />
-            <TouchableOpacity
-              onPress={() => setPasswordVisible(!passwordVisible)}
-            >
+          {/* Inputs */}
+          <View style={styles.inputsContainer}>
+            <View style={styles.inputContainer}>
+              <Ionicons name="person-outline" size={24} color="lightgrey" />
+              <TextInput
+                style={styles.inputField}
+                placeholder="Full name"
+                onChangeText={(newText) => setFullName(newText)}
+                value={fullName}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={24} color="lightgrey" />
+              <TextInput
+                style={styles.inputField}
+                placeholder="Email address"
+                onChangeText={(newText) => setEmail(newText)}
+                value={email}
+                keyboardType="email-address"
+              />
+            </View>
+            <View style={styles.inputContainer}>
               <Ionicons
-                name={passwordVisible ? "eye-outline" : "eye-off-outline"}
+                name="lock-closed-outline"
                 size={24}
                 color="lightgrey"
               />
+              <TextInput
+                style={styles.inputField}
+                placeholder="Password"
+                onChangeText={(newText) => setPassword(newText)}
+                value={password}
+                secureTextEntry={!passwordVisible} // Toggle secureTextEntry
+              />
+              <TouchableOpacity
+                onPress={() => setPasswordVisible(!passwordVisible)}
+              >
+                <Ionicons
+                  name={passwordVisible ? "eye-outline" : "eye-off-outline"}
+                  size={24}
+                  color="lightgrey"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Buttons */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.signupButton}
+              onPress={submitHandler}
+              disabled={loading} // Disable button during loading
+            >
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={{ color: "white" }}>Sign Up</Text>
+              )}
             </TouchableOpacity>
           </View>
-        </View>
 
-        {/* Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.signupButton}
-            onPress={submitHandler}
-            disabled={loading} // Disable button during loading
-          >
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={{ color: "white" }}>Sign Up</Text>
-            )}
-          </TouchableOpacity>
+          {/* Links */}
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>
+              Already have an account?{" "}
+              <Link href="/auth/mainAuth/signin" style={styles.signinLink}>
+                Sign in
+              </Link>
+            </Text>
+            <Text style={styles.footerNote}>
+              By creating an account you agree to ACSS & PITCH's{" "}
+              <Link href="/auth/mainAuth/terms" style={styles.footerLink}>
+                Privacy policy
+              </Link>{" "}
+              and{" "}
+              <Link href="auth/mainAuth/terms" style={styles.footerLink}>
+                Terms of use
+              </Link>
+            </Text>
+          </View>
         </View>
-
-        {/* Links */}
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>
-            Already have an account?{" "}
-            <Link href="/auth/mainAuth/signin" style={styles.signinLink}>
-              Sign in
-            </Link>
-          </Text>
-          <Text style={styles.footerNote}>
-            By creating an account you agree to ACSS & PITCH's{" "}
-            <Link
-              href="/auth/mainAuth/terms"
-              style={styles.footerLink}
-            >
-              Privacy policy
-            </Link>{" "}
-            and{" "}
-            <Link href="auth/mainAuth/terms" style={styles.footerLink}>
-              Terms of use
-            </Link>
-          </Text>
-        </View>
-      </View>
+      </KeyboardAvoidingView>
     </ScrollView>
   );
 };

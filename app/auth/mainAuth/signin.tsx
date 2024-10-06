@@ -7,6 +7,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -55,14 +57,23 @@ const Signin = () => {
             "Unauthorized access. Please check your credentials."
           );
         } else if (statusCode === 403) {
-          Alert.alert("Login Failed", "Access forbidden. Please contact support.");
+          Alert.alert(
+            "Login Failed",
+            "Access forbidden. Please contact support."
+          );
         } else if (statusCode === 404) {
           Alert.alert("Login Failed", "User not found.");
         } else {
-          Alert.alert("Login Failed", "An unexpected error occurred. Please try again.");
+          Alert.alert(
+            "Login Failed",
+            "An unexpected error occurred. Please try again."
+          );
         }
       } else {
-        Alert.alert("Login Failed", "Network error. Please check your internet connection.");
+        Alert.alert(
+          "Login Failed",
+          "Network error. Please check your internet connection."
+        );
       }
       console.log("Login error:", error);
     } finally {
@@ -72,83 +83,96 @@ const Signin = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}>Welcome Back!</Text>
-          <Text style={styles.headerSubtitle}>
-            Enter your email to sign into your account
-          </Text>
-        </View>
-
-        <View style={styles.inputsContainer}>
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={24} color="lightgrey" />
-            <TextInput
-              style={styles.inputField}
-              placeholder="Email address"
-              onChangeText={(newText) =>
-                setFormData((prevState) => ({ ...prevState, email: newText.toLowerCase() }))
-              }
-              defaultValue={formData.email}
-              keyboardType="email-address"
-            />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={100} // Adjust this value based on your header height
+      >
+        <View style={styles.container}>
+          <View style={styles.headerContainer}>
+            <Text style={styles.headerTitle}>Welcome Back!</Text>
+            <Text style={styles.headerSubtitle}>
+              Enter your email to sign into your account
+            </Text>
           </View>
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={24} color="lightgrey" />
-            <TextInput
-              style={styles.inputField}
-              placeholder="Password"
-              onChangeText={(newText) =>
-                setFormData((prevState) => ({
-                  ...prevState,
-                  password: newText,
-                }))
-              }
-              defaultValue={formData.password}
-              secureTextEntry={!passwordVisible} // Toggle secureTextEntry
-            />
-            <TouchableOpacity
-              onPress={() => setPasswordVisible(!passwordVisible)}
-            >
+
+          <View style={styles.inputsContainer}>
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={24} color="lightgrey" />
+              <TextInput
+                style={styles.inputField}
+                placeholder="Email address"
+                onChangeText={(newText) =>
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    email: newText.toLowerCase(),
+                  }))
+                }
+                defaultValue={formData.email}
+                keyboardType="email-address"
+              />
+            </View>
+            <View style={styles.inputContainer}>
               <Ionicons
-                name={passwordVisible ? "eye-outline" : "eye-off-outline"}
+                name="lock-closed-outline"
                 size={24}
                 color="lightgrey"
               />
+              <TextInput
+                style={styles.inputField}
+                placeholder="Password"
+                onChangeText={(newText) =>
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    password: newText,
+                  }))
+                }
+                defaultValue={formData.password}
+                secureTextEntry={!passwordVisible} // Toggle secureTextEntry
+              />
+              <TouchableOpacity
+                onPress={() => setPasswordVisible(!passwordVisible)}
+              >
+                <Ionicons
+                  name={passwordVisible ? "eye-outline" : "eye-off-outline"}
+                  size={24}
+                  color="lightgrey"
+                />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("auth/forgotPassword/forgotPassword")
+              }
+            >
+              <Text style={styles.forgotPassword}>Forgot your password?</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate("auth/forgotPassword/forgotPassword")
-            }
-          >
-            <Text style={styles.forgotPassword}>Forgot your password?</Text>
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.signinButton}
-            onPress={submitHandler}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.signinButtonText}>Sign in</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.signinButton}
+              onPress={submitHandler}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.signinButtonText}>Sign in</Text>
+              )}
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>
-            Don't have an account?{" "}
-            <Link href="/auth/mainAuth/signup" style={styles.signupLink}>
-              Sign up
-            </Link>
-          </Text>
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>
+              Don't have an account?{" "}
+              <Link href="/auth/mainAuth/signup" style={styles.signupLink}>
+                Sign up
+              </Link>
+            </Text>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </ScrollView>
   );
 };
