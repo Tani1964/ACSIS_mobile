@@ -7,8 +7,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -83,11 +81,7 @@ const Signin = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={100} // Adjust this value based on your header height
-      >
+      
         <View style={styles.container}>
           <View style={styles.headerContainer}>
             <Text style={styles.headerTitle}>Welcome Back!</Text>
@@ -172,7 +166,6 @@ const Signin = () => {
             </Text>
           </View>
         </View>
-      </KeyboardAvoidingView>
     </ScrollView>
   );
 };

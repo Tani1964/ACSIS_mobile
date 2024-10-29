@@ -1,680 +1,105 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-  TextInput,
-  Alert,
-  RefreshControl,
-  ActivityIndicator,
-  useWindowDimensions,
-} from "react-native";
-import Header from "../../components/header";
-import { axi, useAuth } from "../context/AuthContext";
-import { useNavigation } from "@react-navigation/native";
-import MainAdvert from "@/components/mainAdvert";
+import { View, Text, StyleSheet, ActivityIndicator, Alert, RefreshControl, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import Header from '../../components/header';
+import { WebView } from 'react-native-webview';
+import MainAdvert from '@/components/mainAdvert';
+
 
 const Votes = () => {
-  const [page, setPage] = useState("votes");
-  const [votingData, setVotingData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { authState } = useAuth();
-  const navigation = useNavigation();
+  const [key, setKey] = useState(0); // To force reload of WebView
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [voteModalVisible, setVoteModalVisible] = useState(false);
-  const [selectedAward, setSelectedAward] = useState(null);
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [nominationInput, setNominationInput] = useState("");
-  const [nominations, setNominations] = useState([]);
-  const [nominationSuggestions, setNominationSuggestions] = useState([]);
-  const [nominee, setNominee] = useState(null);
-  const [nomineeType, setNomineeType] = useState("");
-  const [pitchNames, setPitchNames] = useState({});
-  const [buttonLoader, setButtonLoader] = useState(false);
-
-  const { width, height } = useWindowDimensions();
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const auth = await authState.authenticated;
-        if (!auth) {
-          navigation.navigate("auth/mainAuth/signin");
-        } else {
-          fetchData();
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    checkAuth();
-  }, [authState, navigation, fetchData]);
-
-  const fetchData = async () => {
-    try {
-      const headers = { Authorization: `Bearer ${authState.token}` };
-      const response = await axi.get("/award/get-awards");
-      setVotingData(response.data.awards);
-      setNominations(response.data.nominations);
-    } catch (error) {
-      console.error("Error fetching awards:", error);
-      handleError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleError = (error) => {
-    if (error.response) {
-      const statusCode = error.response.status;
-      switch (statusCode) {
-        case 400:
-          Alert.alert("Error", "Bad request. Please try again later.");
-          break;
-        case 401:
-          console.log("Error", "Unauthorized access. Please log in again.");
-          navigation.navigate("auth/mainAuth/signin");
-          break;
-        case 403:
-          Alert.alert(
-            "Error",
-            "Forbidden access. You do not have permission to access this resource."
-          );
-          break;
-        case 404:
-          Alert.alert("Error", "Awards not found.");
-          break;
-        case 500:
-          console.log(
-            "Error",
-            "Internal server error. Please try again later."
-          );
-          break;
-        default:
-          Alert.alert(
-            "Error",
-            "An unexpected error occurred. Please try again later."
-          );
-          break;
-      }
-    } else {
-      Alert.alert(
-        "Error",
-        "Network error. Please check your internet connection."
-      );
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const getPitch = async (id) => {
-    try {
-      const response = await axi.get(`/pitch/get-pitch/${id}`);
-
-      // Assuming the response contains a data object with the pitch information
-      const pitchName = response.data.pitch.competition_questions.business_name; // Adjust 'name' based on actual API response structure
-      return pitchName;
-    } catch (error) {
-      console.error("Error fetching pitch:", error);
-      throw error; // Optionally re-throw the error for further handling
-    }
-  };
-
-  const fetchPitches = useCallback(async (award) => {
-    const pitches = {};
-    await Promise.all(
-      award.nominees.map(async (nominee) => {
-        if (nominee.pitch_nominee) {
-          try {
-            const pitchName = await getPitch(nominee.pitch_nominee.id);
-            pitches[nominee.pitch_nominee.id] = pitchName; // Store the fetched pitch name
-          } catch (err) {
-            console.error("Error fetching pitch name:", err);
-          }
-        }
-      })
+  const handleError = (syntheticEvent) => {
+    setHasError(true);
+    Alert.alert(
+      "Load Error",
+      "Failed to load the content. Please check your internet connection or try again later.",
+      [{ text: "OK" }]
     );
-    
-    setPitchNames(pitches); // Set all fetched pitch names in one go
-  }, [votingData]);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchData().finally(() => setRefreshing(false));
-  }, []);
-
-  const openNominationModal = (award) => {
-    setSelectedAward(award);
-    setModalVisible(true);
-  };
-
-  const openVoteModal = async (award) => {
-    setLoading(true);
-    await setSelectedAward(award);
-    setVoteModalVisible(true);
-    setLoading(false);
   };
   
+  
+  
 
-  const submitNomination = async () => {
-    if (nominationInput.trim() === "" || !nominee) {
-      Alert.alert("", "Please enter a name to nominate.");
-      return;
-    }
-
-    try {
-      setButtonLoader(true);
-      const formData = {
-        nomineeId: nominee.id,
-        nomineeType: nomineeType,
-        awardId: selectedAward.id,
-        reason: "",
-      };
-
-      await axi.post("/award/nominate-for-award", formData);
-
-      Alert.alert(
-        "Nomination Submitted",
-        `You nominated ${nominationInput} for ${selectedAward.title}`
-      );
-      setModalVisible(false);
-      setNominationInput("");
-      setNominee(null); // Clear the selected nominee
-      setNominationSuggestions([]); // Clear suggestions
-    } catch (error) {
-      let message =
-        "An error occurred while submitting your nomination. Please try again later.";
-
-      if (error.response) {
-        const statusCode = error.response.status;
-        switch (statusCode) {
-          case 400:
-            // Bad request
-            message = "Invalid nomination request. Please check your input.";
-            break;
-          case 401:
-            // Unauthorized access
-            message = "Unauthorized access. Please log in again.";
-            navigation.navigate("auth/mainAuth/signin");
-            break;
-          case 403:
-            // Forbidden access
-            message =
-              "Forbidden access. You do not have permission to perform this action.";
-            break;
-          case 404:
-            // Resource not found
-            message = "Award or nominee not found.";
-            break;
-          case 409:
-            // Conflict
-            message = "You have already nominated this company for this award.";
-            break;
-          case 500:
-            // Internal server error
-            message = "Internal server error. Please try again later.";
-            break;
-          default:
-            // Generic error message
-            message = "An unexpected error occurred. Please try again later.";
-            break;
-        }
-      } else if (error.request) {
-        // No response received
-        message = "Network error. Please check your internet connection.";
-      } else {
-        // Error setting up request
-        message = "An error occurred while setting up the request.";
-      }
-
-      Alert.alert("", message);
-    } finally {
-      setButtonLoader(false);
-    }
+  const onRefresh = () => {
+    setRefreshing(true);
+    setKey(prevKey => prevKey + 1); // Change the key to force reload
+    setHasError(false); // Reset the error state
+    setRefreshing(false); // Stop refreshing after reloading
   };
-
-  const submitVote = async () => {
-    if (!selectedCompany || !selectedAward) {
-      Alert.alert("Error", "Please select a company to vote for.");
-      return;
-    }
-
-    try {
-      setButtonLoader(true);
-      const headers = { Authorization: `Bearer ${authState.token}` };
-
-      await axi.post(
-        "/award/vote-for-nominee",
-        {
-          awardId: selectedAward.id,
-          nomineeId: selectedCompany.id,
-        },
-        { headers }
-      );
-      Alert.alert(
-        "Vote Submitted",
-        `Voting successful...`
-      );
-    } catch (error) {
-      let message =
-        "An error occurred while submitting your vote. Please try again later.";
-
-      if (error.response) {
-        const statusCode = error.response.status;
-        switch (statusCode) {
-          case 400:
-            // Specific error message for already voted
-            message = "You have already voted for this award category.";
-            break;
-          case 401:
-            // Unauthorized access
-            message = "Unauthorized access. Please log in again.";
-            navigation.navigate("auth/mainAuth/signin");
-            break;
-          case 403:
-            // Forbidden access
-            message =
-              "Forbidden access. You do not have permission to perform this action.";
-            break;
-          case 404:
-            // Resource not found
-            message = "Award or nominee not found.";
-            break;
-          case 500:
-            // Internal server error
-            message = "Internal server error. Please try again later.";
-            break;
-          default:
-            // Generic error message
-            message = "An unexpected error occurred. Please try again later.";
-            break;
-        }
-      } else if (error.request) {
-        // No response received
-        message = "Network error. Please check your internet connection.";
-      } else {
-        // Error setting up request
-        message = "An error occurred while setting up the request.";
-      }
-
-      Alert.alert("", message);
-    } finally {
-      setVoteModalVisible(false);
-      setSelectedCompany(null);
-      setButtonLoader(false);
-    }
-  };
-
-  const fetchNominationSuggestions = useCallback(async () => {
-    if (nominationInput.trim() === "") {
-      setNominationSuggestions([]);
-      return;
-    }
-
-    try {
-      const headers = { Authorization: `Bearer ${authState.token}` };
-      const response = await axi.get(
-        `/user/get-search-by-query-string?type=business&query=${nominationInput}`,
-        { headers }
-      );
-      setNominationSuggestions(response.data.results || []);
-    } catch (error) {
-      console.error("Error fetching nomination suggestions:", error);
-    }
-  }, [nominationInput, authState.token]);
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchNominationSuggestions();
-    }, 1000);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [nominationInput, fetchNominationSuggestions]);
 
   return (
     <View style={styles.container}>
       <Header />
-      <View>
+      <ScrollView 
+        contentContainerStyle={styles.content} 
+        // refreshControl={
+        //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        // }
+      >
+        {hasError ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Failed to load content.</Text>
+          </View>
+        ) : (
+          <WebView
+            key={key}
+            source={{ uri: 'https://africancaribbeansummit.com/awards' }} // Replace with your desired URL
+            style={styles.webview}
+            startInLoadingState={true}
+            renderLoading={() => <ActivityIndicator color="#196100" size="large" style={styles.loadingIndicator} />}
+            onError={handleError}
+          />
+        )}
         <View style={styles.sponsors}>
-          <MainAdvert filter={"award"} />
+          <MainAdvert filter={"award"}/>
         </View>
-        <ScrollView
-          style={[
-            { paddingHorizontal: 10, paddingVertical: 10, marginTop: 100 },
-            { height: height * 0.63 },
-          ]}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          {page === "votes" ? (
-            <View>
-              {votingData.map((award) => (
-                <View key={award.id} style={styles.awardContainer}>
-                  <View style={styles.awardHeader}>
-                    <Text style={styles.awardTitle}>{award.title} 🏅</Text>
-                    {award.status === "nominations-open" ? (
-                      <TouchableOpacity
-                        style={styles.nominateButton}
-                        onPress={() => openNominationModal(award)}
-                      >
-                        <Text style={styles.nominateButtonText}>Nominate</Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <TouchableOpacity
-                        style={styles.nominateButton}
-                        onPress={async () => {
-                          await fetchPitches(award);
-                          openVoteModal(award);
-                        }}
-                      >
-                        <Text style={styles.nominateButtonText}>Vote</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View>
-              {nominations.length === 0 && (
-                <Text>You haven't been Nominated Yet.</Text>
-              )}
-              {Array.isArray(nominations) &&
-                nominations.map((award) => (
-                  <View key={award.id} style={styles.awardContainer}>
-                    <View style={styles.awardHeader}>
-                      <Text style={styles.awardTitle}>{award.title} 🏅</Text>
-                    </View>
-                  </View>
-                ))}
-            </View>
-          )}
-          <View style={{ height: 100 }} />
-        </ScrollView>
-      </View>
-      {/* Nomination Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              Nominate for {selectedAward?.title}
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={nominationInput}
-              onChangeText={(text) => {
-                setNominationInput(text);
-                setNominee(null); // Clear the selected nominee when text changes
-              }}
-              placeholder="Enter business or user name"
-            />
-            <ScrollView>
-              {Array.isArray(nominationSuggestions) &&
-                nominationSuggestions.map((suggestion) => {
-                  const displayText =
-                    suggestion.business_name ||
-                    suggestion.full_name ||
-                    (suggestion.competition_questions &&
-                      suggestion.competition_questions.business_name);
-
-                  if (displayText) {
-                    return (
-                      <TouchableOpacity
-                        key={suggestion.id}
-                        onPress={() => {
-                          setNominationInput(displayText);
-                          setNominee(suggestion);
-                          if (suggestion.business_name) {
-                            setNomineeType("business");
-                          } else if (suggestion.full_name) {
-                            setNomineeType("user");
-                          } else {
-                            setNomineeType("pitch");
-                          }
-                        }}
-                        style={styles.suggestionItem}
-                      >
-                        <Text>{displayText}</Text>
-                      </TouchableOpacity>
-                    );
-                  }
-
-                  return null;
-                })}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={submitNomination}
-              disabled={buttonLoader}
-            >
-              {buttonLoader ? (
-                <ActivityIndicator size={"small"} color={"white"} />
-              ) : (
-                <Text style={styles.modalButtonText}>Submit Nomination</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.modalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Voting Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={voteModalVisible}
-        onRequestClose={() => {
-          setVoteModalVisible(!voteModalVisible);
-        }}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              Vote for {selectedAward?.title}
-            </Text>
-            <ScrollView>
-              {selectedAward &&
-                selectedAward.nominees.map((nominee) => (
-                  <TouchableOpacity
-                    key={nominee.id}
-                    onPress={() => setSelectedCompany(nominee)}
-                    style={[
-                      styles.suggestionItem,
-                      {
-                        backgroundColor:
-                          selectedCompany === nominee ? "lightgray" : "white",
-                      },
-                    ]}
-                  >
-                    {nominee?.pitch_nominee ? (
-                      <Text>
-                        {pitchNames[nominee?.pitch_nominee?.id] || "Loading..."}
-                      </Text>
-                    ) : (
-                      <Text>
-                        {nominee?.business_nominee?.business_name ||
-                          nominee?.user_nominee?.full_name ||
-                          "Unnamed Nominee"}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={submitVote}
-              disabled={buttonLoader}
-            >
-              {buttonLoader ? (
-                <ActivityIndicator size={"small"} color={"white"} />
-              ) : (
-                <Text style={styles.modalButtonText}>Submit Vote</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
-              onPress={() => setVoteModalVisible(false)}
-            >
-              <Text style={styles.modalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* <View style={styles.bottomTabContainer}>
-        <TouchableOpacity
-          onPress={() => setPage("votes")}
-          style={[styles.bottomTab, page === "votes" && styles.bottomTabActive]}
-        >
-          <Text style={styles.bottomTabText}>Vote</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setPage("nominations")}
-          style={[
-            styles.bottomTab,
-            page === "nominations" && styles.bottomTabActive,
-          ]}
-        >
-          <Text style={styles.bottomTabText}>Nominations</Text>
-        </TouchableOpacity>
-      </View> */}
+      </ScrollView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f8f8",
   },
-  awardContainer: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: "white",
-    borderRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 5,
+  content: {
+    flexGrow: 1, // Ensure content stretches to fill the ScrollView
   },
-  awardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  awardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  nominateButton: {
-    backgroundColor: "green",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-  },
-  nominateButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    width: "80%",
-    padding: 20,
-    backgroundColor: "white",
-    borderRadius: 10,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-  },
-  input: {
-    height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 15,
-    paddingHorizontal: 10,
-  },
-  suggestionItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  modalButton: {
-    backgroundColor: "green",
-    paddingVertical: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  cancelButton: {
-    backgroundColor: "#e74c3c",
-  },
-  modalButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  bottomTabContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    borderTopWidth: 1,
-    borderColor: "#ddd",
-    paddingVertical: 10,
-    backgroundColor: "white",
-  },
-  bottomTab: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-  },
-  bottomTabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#3498db",
-  },
-  bottomTabText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  innerContainer: {
-    marginTop: 100,
+  loadingIndicator: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -25 }, { translateY: -25 }],
   },
   sponsors: {
-    position: "absolute", // Absolute positioning to overlap the WebView
+    position: 'absolute', // Absolute positioning to overlap the WebView
     top: 0, // Adjust as needed to control the overlap position
     left: 0,
     right: 0,
-    height: "14%", // Adjust height as needed
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white", // Semi-transparent background to overlap but still show the WebView content
+    height: "18%", // Adjust height as needed
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white', // Semi-transparent background to overlap but still show the WebView content
     zIndex: 1, // Ensure it appears above the WebView
+  },
+  sponsorText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  webview: {
+    flex: 1,
+    height: 400, // Ensure the WebView has a defined height
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
   },
 });
 

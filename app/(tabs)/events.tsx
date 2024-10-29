@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
-  useWindowDimensions
+  useWindowDimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { axi } from "../context/AuthContext";
@@ -140,33 +140,32 @@ const Events = () => {
             onChangeText={setSearchQuery}
           />
           <View style={styles.filterContainer}>
-              {["", "Day 1", "Day 2", "Day 3"].map((day) => (
-                <TouchableOpacity
-                  key={day}
+            {["", "Day 1", "Day 2", "Day 3"].map((day) => (
+              <TouchableOpacity
+                key={day}
+                style={[
+                  styles.filterButton,
+                  selectedDay === day && styles.filterButtonActive,
+                ]}
+                onPress={() => setSelectedDay(day)}
+              >
+                <Text
                   style={[
-                    styles.filterButton,
-                    selectedDay === day && styles.filterButtonActive,
+                    styles.filterButtonText,
+                    selectedDay === day && styles.filterButtonTextActive,
                   ]}
-                  onPress={() => setSelectedDay(day)}
                 >
-                  <Text
-                    style={[
-                      styles.filterButtonText,
-                      selectedDay === day && styles.filterButtonTextActive,
-                    ]}
-                  >
-                    {day || "All Days"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {day || "All Days"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <ScrollView
             style={[styles.scrollView, { height: height * 0.6 }]}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
           >
-            
             {filteredEvents.length === 0 ? (
               <Text style={styles.emptyText}>No events found.</Text>
             ) : (
@@ -196,6 +195,7 @@ const Events = () => {
                         flexDirection: "column",
                         justifyContent: "space-between",
                         gap: 8,
+                        width: '70%'
                       }}
                     >
                       <Text style={styles.eventName}>
@@ -268,7 +268,7 @@ const Events = () => {
                 </View>
               ))
             )}
-             <View style={{ height: 100 }} />
+            <View style={{ height: 100 }} />
           </ScrollView>
         </View>
         <View style={styles.sponsors}>
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     gap: 20,
     marginBottom: 10,
     paddingHorizontal: 4,
-    marginHorizontal: 15
+    marginHorizontal: 15,
   },
   filterButton: {
     paddingVertical: 8,
@@ -379,6 +379,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   location: {
+    width: "50%",
     fontSize: 14,
     color: "#666",
   },

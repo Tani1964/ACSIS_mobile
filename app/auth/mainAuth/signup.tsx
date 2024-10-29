@@ -8,8 +8,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import React, { useState, useLayoutEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -48,6 +46,7 @@ const Signup = () => {
 
     setLoading(true);
     try {
+      await setEmail(email.toLowerCase()) 
       const response = await axi.post("/auth/register", {
         email,
         fullName,
@@ -86,11 +85,7 @@ const Signup = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={100} // Adjust this value based on your header height
-      >
+      
         <View style={styles.container}>
           <View style={styles.headerContainer}>
             <Image
@@ -184,7 +179,6 @@ const Signup = () => {
             </Text>
           </View>
         </View>
-      </KeyboardAvoidingView>
     </ScrollView>
   );
 };
@@ -200,6 +194,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    paddingBottom:20,
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
   },

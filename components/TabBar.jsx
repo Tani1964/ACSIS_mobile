@@ -39,7 +39,7 @@ const TabBar = ({ state, descriptors, navigation }) => {
                             : route.name;
                 const pitchState = authState.authenticated  ? "(pitch)/pitchList" : "(pitch)/index";
 
-                if (!['index', 'events', "business", pitchState, authState.authenticated && "votes"].includes(route.name)) return null;
+                if (!['index', 'events', "business", pitchState,  "votes"].includes(route.name)) return null;
 
                 const isFocused = state.index === index;
 

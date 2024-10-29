@@ -34,9 +34,9 @@ const Home = () => {
       <Header />
       <ScrollView 
         contentContainerStyle={styles.content} 
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        // refreshControl={
+        //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        // }
       >
         {hasError ? (
           <View style={styles.errorContainer}>
