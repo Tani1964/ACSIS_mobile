@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   inputField: {
+    color: "black",
     flex: 1,
     height: 40,
     paddingHorizontal: 10,

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, Dimensions, ActivityIndicator } from "react-native";
+import { StyleSheet, Text, View, Image, Dimensions, ActivityIndicator, ImageBackground  } from "react-native";
 import React, { useEffect, useState } from "react";
 import Carousel from "react-native-reanimated-carousel";
 import { axi } from "@/app/context/AuthContext";
@@ -28,13 +28,17 @@ const MainAdvert = ({ filter }) => {
         return (
             <View style={styles.loaderContainer}>
                 <ActivityIndicator size="large" color="green" />
-                <Text>Loading...</Text>
+                <Text>Loading, please hold on ...</Text>
             </View>
         );
     }
 
     return (
         <View style={styles.sponsorsBar}>
+            <ImageBackground
+      source={require("../assets/images/background.png")}  // Add your image path
+      style={styles.backgroundImage}
+    >
             <Carousel
                 width={width}
                 height={"100%"}
@@ -51,7 +55,7 @@ const MainAdvert = ({ filter }) => {
                         </View>
                     );
                 }}
-            />
+            /></ImageBackground>
         </View>
     );
 };
@@ -71,6 +75,12 @@ const styles = StyleSheet.create({
         elevation: 5,
         backgroundColor: '#fff', // Optional: to give a background color
     },
+    backgroundImage: {
+        flex: 1,
+        resizeMode: 'cover', // or 'contain', 'stretch', depending on your needs
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
     image: {
         width: "100%",
         height: "80%",

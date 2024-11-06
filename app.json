@@ -2,7 +2,7 @@
   "expo": {
     "name": "ACSIS",
     "slug": "acsis",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/images/adaptive-icon.png",
     "scheme": "myapp",
@@ -71,7 +71,7 @@
       "router": {
         "origin": false
       },
-      "eas": {
+      "?eas": {
         "projectId": "27c1f304-6246-4f10-a9d3-9f79425eed02"
       }
     },

@@ -48,7 +48,8 @@ const Home = () => {
             source={{ uri: 'https://widgets.sociablekit.com/linkedin-page-posts/iframe/25427584' }} // Replace with your desired URL
             style={styles.webview}
             startInLoadingState={true}
-            renderLoading={() => <ActivityIndicator color="#196100" size="large" style={styles.loadingIndicator} />}
+            renderLoading={() => <></>}
+            
             onError={handleError}
           />
         )}

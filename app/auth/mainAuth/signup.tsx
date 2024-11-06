@@ -110,7 +110,7 @@ const Signup = () => {
               />
             </View>
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={24} color="lightgrey" />
+              <Ionicons name="mail-outline" size={24} color="grey" />
               <TextInput
                 style={styles.inputField}
                 placeholder="Email address"
@@ -123,7 +123,7 @@ const Signup = () => {
               <Ionicons
                 name="lock-closed-outline"
                 size={24}
-                color="lightgrey"
+                color="grey"
               />
               <TextInput
                 style={styles.inputField}
@@ -230,6 +230,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   inputField: {
+    color: "black",
     flex: 1,
     height: 40,
     paddingHorizontal: 10,

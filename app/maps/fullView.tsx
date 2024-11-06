@@ -211,11 +211,28 @@ const FullView = () => {
       </View>
 
       {/* Draggable Info Container */}
-      <GestureDetector gesture={gesture}>
+      <GestureDetector gesture={gesture} >
         <Animated.View style={[styles.infoContainer, animatedStyle]}>
           <Text style={styles.infoTitle}>More Info</Text>
-          <ScrollView style={styles.infoScroll}>
+          <ScrollView style={styles.infoScroll} contentContainerStyle={{ flexGrow: 1 }}>
             {/* Render event details here as before */}
+            <View style={styles.links}>
+                <Text style={styles.infoLabel}>Links: </Text>
+                {event.otherLinks && event.otherLinks.length > 0 ? (
+                  event.otherLinks.map((link, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() =>
+                        navigation.navigate("maps/linkWeb", { link: link.url })
+                      }
+                    >
+                      <Text style={styles.linkText}>{link.title}</Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text>No Links Available</Text>
+                )}
+              </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Location: </Text>
               <Text>{event.location || "N/A"}</Text>
@@ -251,23 +268,7 @@ const FullView = () => {
                 <Text>None</Text>
               )} */}
             {/* </View> */}
-            <View style={styles.links}>
-                <Text style={styles.infoLabel}>Other Links: </Text>
-                {event.otherLinks && event.otherLinks.length > 0 ? (
-                  event.otherLinks.map((link, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      onPress={() =>
-                        navigation.navigate("maps/linkWeb", { link: link.url })
-                      }
-                    >
-                      <Text style={styles.linkText}>{link.title}</Text>
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <Text>No Links Available</Text>
-                )}
-              </View>
+            
             <View style={styles.infoRow}>
               <View style={styles.infoColumn}>
                 <Text style={styles.infoLabel}>Sponsors:</Text>
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: "120%", // Full height
+    height:"120%",
     backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -331,20 +332,26 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     borderLeftWidth: 1,
-    borderRightWidth: 1
+    borderRightWidth: 1,
+    width: "100%", // Ensure full width
+  },
+  infoScroll: {
+    padding: 16,
+    flex: 1, // Allow flexibility within ScrollView
+    width: "100%",
+  },
+  infoRow: {
+    flexDirection: "row",
+    marginBottom: 10,
+    alignItems: "flex-start", // Allow wrapping if needed
+    justifyContent: "space-between", // Space between elements
+    flexWrap: "wrap",
   },
   infoTitle: {
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
     padding: 16,
-  },
-  infoScroll: {
-    padding: 16,
-  },
-  infoRow: {
-    flexDirection: "row",
-    marginBottom: 10,
   },
   infoLabel: {
     fontWeight: "bold",
